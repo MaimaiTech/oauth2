@@ -1,0 +1,232 @@
+oauth2:
+  menu:
+    providers: "OAuth Providers"
+    bindings: "User Bindings"
+    statistics: "Statistics"
+    personalBindings: "Third-party Accounts"
+  
+  providers:
+    title: "OAuth Provider Management"
+    create: "Add Provider"
+    edit: "Edit Provider"
+    delete: "Delete Provider"
+    enable: "Enable"
+    disable: "Disable"
+    testConnection: "Test Connection"
+    search: "Search providers"
+    refresh: "Refresh"
+    
+    form:
+      name: "Provider Name"
+      displayName: "Display Name"
+      clientId: "Client ID"
+      clientSecret: "Client Secret"
+      redirectUri: "Redirect URI"
+      scopes: "Scopes"
+      status: "Status"
+      sort: "Sort Order"
+      description: "Description"
+      
+      placeholders:
+        name: "Select OAuth provider"
+        displayName: "Enter display name"
+        clientId: "Enter client ID"
+        clientSecret: "Enter client secret"
+        redirectUri: "Enter redirect URI"
+        scopes: "Enter required scopes"
+        description: "Enter description"
+        
+      validation:
+        nameRequired: "Provider name is required"
+        displayNameRequired: "Display name is required"
+        clientIdRequired: "Client ID is required"
+        clientSecretRequired: "Client secret is required"
+        redirectUriRequired: "Redirect URI is required"
+        redirectUriInvalid: "Please enter a valid URL"
+        
+    columns:
+      id: "ID"
+      name: "Provider"
+      displayName: "Display Name"
+      status: "Status"
+      createdAt: "Created At"
+      updatedAt: "Updated At"
+      actions: "Actions"
+      
+    status:
+      enabled: "Enabled"
+      disabled: "Disabled"
+      
+    actions:
+      view: "View"
+      edit: "Edit"
+      delete: "Delete"
+      enable: "Enable"
+      disable: "Disable"
+      
+    messages:
+      createSuccess: "Provider created successfully"
+      updateSuccess: "Provider updated successfully"
+      deleteSuccess: "Provider deleted successfully"
+      enableSuccess: "Provider enabled successfully"
+      disableSuccess: "Provider disabled successfully"
+      testConnectionSuccess: "Connection test successful"
+      testConnectionFailed: "Connection test failed"
+      deleteConfirm: "Are you sure you want to delete this provider?"
+      
+  bindings:
+    title: "User OAuth Bindings"
+    search: "Search users"
+    refresh: "Refresh"
+    unbind: "Unbind"
+    
+    columns:
+      id: "ID"
+      userId: "User ID"
+      username: "Username"
+      provider: "Provider"
+      providerUserId: "Provider User ID"
+      email: "Email"
+      nickname: "Nickname"
+      avatar: "Avatar"
+      bindTime: "Bind Time"
+      lastLogin: "Last Login"
+      actions: "Actions"
+      
+    actions:
+      view: "View Details"
+      unbind: "Unbind Account"
+      
+    messages:
+      unbindSuccess: "Account unbound successfully"
+      unbindConfirm: "Are you sure you want to unbind this OAuth account?"
+      
+    filters:
+      provider: "Filter by provider"
+      status: "Filter by status"
+      all: "All"
+      
+  statistics:
+    title: "OAuth Statistics"
+    overview: "Overview"
+    trends: "Trends"
+    
+    cards:
+      totalUsers: "Total OAuth Users"
+      activeUsers: "Active Users"
+      newUsers: "New Users Today"
+      totalProviders: "Total Providers"
+      
+    charts:
+      userGrowth: "User Growth Trend"
+      providerDistribution: "Provider Distribution"
+      dailyLogins: "Daily OAuth Logins"
+      
+    periods:
+      today: "Today"
+      week: "This Week"
+      month: "This Month"
+      year: "This Year"
+      
+  personal:
+    title: "My Third-party Accounts"
+    subtitle: "Manage your connected OAuth accounts"
+    noAccounts: "No third-party accounts connected"
+    bindAccount: "Bind Account"
+    unbindAccount: "Unbind Account"
+    
+    account:
+      provider: "Provider"
+      nickname: "Nickname"
+      email: "Email"
+      bindTime: "Bind Time"
+      lastLogin: "Last Login"
+      status: "Status"
+      
+    status:
+      active: "Active"
+      inactive: "Inactive"
+      
+    actions:
+      bind: "Bind {provider}"
+      unbind: "Unbind {provider}"
+      login: "Login with {provider}"
+      connect: "Connect {provider}"
+      
+    messages:
+      bindSuccess: "Account bound successfully"
+      unbindSuccess: "Account unbound successfully"
+      bindFailed: "Failed to bind account"
+      unbindFailed: "Failed to unbind account"
+      unbindConfirm: "Are you sure you want to unbind your {provider} account?"
+      
+  providerInfo:
+    dingtalk:
+      name: "DingTalk"
+      description: "Enterprise communication platform"
+    github:
+      name: "GitHub"
+      description: "Code hosting platform"
+    gitee:
+      name: "Gitee"
+      description: "Chinese code hosting platform"
+    feishu:
+      name: "Feishu"
+      description: "Collaboration platform"
+    wechat:
+      name: "WeChat"
+      description: "Social messaging platform"
+    qq:
+      name: "QQ"
+      description: "Instant messaging service"
+      
+  callback:
+    title: "OAuth Callback Processing"
+    processing: "Processing OAuth callback..."
+    success: "OAuth authentication successful"
+    error: "OAuth authentication failed"
+    redirecting: "Redirecting..."
+    
+    errors:
+      missingProvider: "Missing OAuth provider parameter"
+      unsupportedProvider: "Unsupported OAuth provider"
+      invalidState: "Invalid OAuth state parameter"
+      missingCode: "Missing authorization code"
+      exchangeFailed: "Failed to exchange authorization code"
+      userInfoFailed: "Failed to retrieve user information"
+      bindingFailed: "Failed to bind account"
+      networkError: "Network connection error"
+      timeoutError: "Request timeout"
+      validationError: "Parameter validation failed"
+      
+  common:
+    loading: "Loading..."
+    noData: "No data available"
+    refresh: "Refresh"
+    search: "Search"
+    reset: "Reset"
+    cancel: "Cancel"
+    confirm: "Confirm"
+    save: "Save"
+    delete: "Delete"
+    edit: "Edit"
+    view: "View"
+    enable: "Enable"
+    disable: "Disable"
+    back: "Back"
+    next: "Next"
+    previous: "Previous"
+    submit: "Submit"
+    close: "Close"
+    retry: "Retry"
+    
+    pagination:
+      total: "Total {total} items"
+      page: "Page"
+      pageSize: "Items per page"
+      
+    validation:
+      required: "This field is required"
+      invalid: "Invalid format"
+      tooLong: "Too long"
+      tooShort: "Too short"

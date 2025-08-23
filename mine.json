@@ -1,0 +1,22 @@
+{
+  "name": "maimaitech/oauth2",
+  "version": "1.0.0",
+  "type": "mixed",
+  "description": "OAuth2 third-party platform login and account binding plugin",
+  "author": [{
+    "name": "MaimaiTech",
+    "email": "support@maimaitech.com"
+  }],
+  "composer": {
+    "require": [],
+    "psr-4": {
+      "Plugin\\MaimaiTech\\OAuth2\\": "src"
+    },
+    "installScript": "Plugin\\MaimaiTech\\OAuth2\\InstallScript",
+    "uninstallScript": "Plugin\\MaimaiTech\\OAuth2\\UninstallScript",
+    "config": "Plugin\\MaimaiTech\\OAuth2\\ConfigProvider"
+  },
+  "package": {
+    "dependencies": []
+  }
+}
