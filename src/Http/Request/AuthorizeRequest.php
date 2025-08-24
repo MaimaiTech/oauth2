@@ -47,6 +47,7 @@ class AuthorizeRequest extends FormRequest
             ],
             'redirect_after_auth' => 'nullable|url|max:500',
             'extra_payload' => 'nullable|array',
+            'redirect_uri' => 'sometimes|url',
         ];
     }
 

@@ -15,5 +15,8 @@ export type { default as ProviderButtonComponent } from './ProviderButton.vue'
 export { default as StatusIndicator } from './StatusIndicator.vue'
 export type { default as StatusIndicatorComponent } from './StatusIndicator.vue'
 
-export { default as OAuthLoginPanel } from '../OAuthLoginPanel.vue'
-export type { default as OAuthLoginPanelComponent } from '../OAuthLoginPanel.vue'
+// Login Components  
+export { default as OAuthLoginButtons } from './OAuthLoginButtons.vue'
+export type { default as OAuthLoginButtonsComponent } from './OAuthLoginButtons.vue'
+export { default as ProviderIcon } from './ProviderIcon.vue'
+export type { default as ProviderIconComponent } from './ProviderIcon.vue'

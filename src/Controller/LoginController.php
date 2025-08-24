@@ -42,7 +42,7 @@ final class LoginController extends AbstractController
      *
      * 生成OAuth授权链接，用户将被重定向到第三方平台进行登录认证
      */
-    #[Get(
+    #[OA\Post(
         path: '/passport/oauth/{provider}',
         operationId: 'oauthLogin',
         description: '发起OAuth登录请求，生成第三方平台登录授权链接并重定向用户',

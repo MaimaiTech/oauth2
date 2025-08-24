@@ -313,3 +313,31 @@ export interface OAuthCallbackResult {
 }
 
 export type OAuthCallbackResponse = ResponseStruct<OAuthCallbackResult>
+
+/**
+ * OAuth Login Callback Response - specific to login flow
+ */
+export interface OAuthLoginCallbackResult {
+  action: 'login'
+  user: {
+    id: number
+    username: string
+    nickname?: string
+    email?: string
+    avatar?: string
+  }
+  oauth_account: {
+    provider: OAuthProviderName
+    provider_username: string
+    provider_email?: string
+  }
+  tokens: {
+    access_token: string
+    refresh_token?: string
+    expire_at: number
+  }
+  redirect_url?: string
+  message?: string
+}
+
+export type OAuthLoginCallbackResponse = ResponseStruct<OAuthLoginCallbackResult>

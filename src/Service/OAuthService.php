@@ -260,6 +260,9 @@ final class OAuthService
         }
 
         // Create OAuth client
+        if ($redirectUri){
+            $providerConfig->redirect_uri = $redirectUri;
+        }
         $client = OAuthClientFactory::create($providerConfig);
 
         // Create state parameter for CSRF protection (no user ID for login flow)

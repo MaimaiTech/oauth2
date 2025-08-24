@@ -26,6 +26,16 @@ const pluginConfig: Plugin.PluginConfig = {
     // Vue plugin installation hook
     console.log('OAuth2 Plugin installed successfully')
     console.log('Plugin components and APIs are now available for import')
+
+    const urlObj = new URL(window.location.href)
+    const code = urlObj.searchParams.get('code') || urlObj.searchParams.get('authCode')
+    const state = urlObj.searchParams.get('state')
+    const hashPath = urlObj.hash.split('?')[0] // 原始 Hash 路径
+
+    if (code && state) {
+      const fixedUrl = `${urlObj.origin}${hashPath}?code=${code}&state=${state}`
+      window.location.href = fixedUrl
+    }
   },
   config: {
     enable: true,
@@ -36,9 +46,18 @@ const pluginConfig: Plugin.PluginConfig = {
       description: 'OAuth2 第三方登录管理插件，支持钉钉、GitHub、码云等多种平台',
     },
   },
+  hooks:{
+    setup(){
+      const settingStore = useSettingStore()
+      const settings = settingStore.getSettings('app')
+      settings.whiteRoute.push('OAuthLoginCallback')
+      settingStore.setSettings(settings,'app')
+    }
+  },
   // Views/Routes are registered dynamically by InstallScript.php
   // This ensures proper menu permissions and supports dynamic plugin installation
-  views: [],
+  views: [
+  ],
 }
 
 export default pluginConfig
