@@ -1,23 +1,6 @@
-<template>
-  <div class="oauth-status-indicator" :class="statusClass">
-    <el-tooltip
-      :content="tooltipContent"
-      placement="top"
-      :disabled="!showTooltip"
-    >
-      <div class="status-content">
-        <el-icon class="status-icon" :size="iconSize">
-          <component :is="statusIcon" />
-        </el-icon>
-        <span v-if="showText" class="status-text">{{ statusText }}</span>
-      </div>
-    </el-tooltip>
-  </div>
-</template>
-
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { OAuthProviderName, OAuthStatus } from '../../api/types'
+import type { OAuthProviderName } from '../../api/types'
 import { getProviderName } from '../../api/userOAuthApi'
 
 // Define props
@@ -43,7 +26,7 @@ interface Props {
 const props = withDefaults(defineProps<Props>(), {
   showText: true,
   iconSize: 16,
-  showTooltip: true
+  showTooltip: true,
 })
 
 // Status configuration mapping
@@ -52,38 +35,38 @@ const statusConfig = {
     icon: 'CircleCheckFilled',
     text: '已连接',
     class: 'status-connected',
-    color: '#67c23a'
+    color: '#67c23a',
   },
   disconnected: {
-    icon: 'CircleCloseFilled', 
+    icon: 'CircleCloseFilled',
     text: '未连接',
     class: 'status-disconnected',
-    color: '#909399'
+    color: '#909399',
   },
   expired: {
     icon: 'WarningFilled',
     text: '已过期',
     class: 'status-expired',
-    color: '#e6a23c'
+    color: '#e6a23c',
   },
   error: {
     icon: 'CircleCloseFilled',
     text: '错误',
     class: 'status-error',
-    color: '#f56c6c'
+    color: '#f56c6c',
   },
   pending: {
     icon: 'Clock',
     text: '处理中',
     class: 'status-pending',
-    color: '#409eff'
+    color: '#409eff',
   },
   disabled: {
     icon: 'CircleCloseFilled',
     text: '已禁用',
     class: 'status-disabled',
-    color: '#c0c4cc'
-  }
+    color: '#c0c4cc',
+  },
 }
 
 // Computed status configuration
@@ -101,61 +84,82 @@ const statusClass = computed(() => [
   currentStatusConfig.value.class,
   {
     'oauth-status-indicator--with-text': props.showText,
-    'oauth-status-indicator--icon-only': !props.showText
-  }
+    'oauth-status-indicator--icon-only': !props.showText,
+  },
 ])
 
 // Tooltip content
 const tooltipContent = computed(() => {
   let content = ''
-  
+
   if (props.provider) {
     content += `${getProviderName(props.provider)}: `
   }
-  
+
   content += currentStatusConfig.value.text
-  
+
   if (props.status === 'error' && props.errorMessage) {
     content += `\n错误: ${props.errorMessage}`
   }
-  
+
   if (props.status === 'connected' && props.lastSync) {
     content += `\n最后同步: ${formatLastSync(props.lastSync)}`
   }
-  
+
   if (props.status === 'expired') {
     content += '\n请重新授权连接'
   }
-  
+
   if (props.additionalInfo) {
     content += `\n${props.additionalInfo}`
   }
-  
+
   return content
 })
 
 // Format last sync time
-const formatLastSync = (timestamp: string): string => {
+function formatLastSync(timestamp: string): string {
   const date = new Date(timestamp)
   const now = new Date()
   const diffMs = now.getTime() - date.getTime()
   const diffMinutes = Math.floor(diffMs / (1000 * 60))
   const diffHours = Math.floor(diffMinutes / 60)
   const diffDays = Math.floor(diffHours / 24)
-  
+
   if (diffMinutes < 1) {
     return '刚刚'
-  } else if (diffMinutes < 60) {
+  }
+  else if (diffMinutes < 60) {
     return `${diffMinutes}分钟前`
-  } else if (diffHours < 24) {
+  }
+  else if (diffHours < 24) {
     return `${diffHours}小时前`
-  } else if (diffDays < 7) {
+  }
+  else if (diffDays < 7) {
     return `${diffDays}天前`
-  } else {
+  }
+  else {
     return date.toLocaleDateString('zh-CN')
   }
 }
 </script>
+
+<template>
+  <div class="oauth-status-indicator" :class="statusClass">
+    <el-tooltip
+      :content="tooltipContent"
+      placement="top"
+      :disabled="!showTooltip"
+    >
+      <div class="status-content">
+        <el-icon class="status-icon" :size="iconSize">
+          <component :is="statusIcon" />
+        </el-icon>
+        <span v-if="showText" class="status-text">{{ statusText }}</span>
+      </div>
+    </el-tooltip>
+  </div>
+</template>
 
 <style lang="scss" scoped>
 .oauth-status-indicator {
@@ -206,7 +210,7 @@ const formatLastSync = (timestamp: string): string => {
     .status-text {
       color: #67c23a;
     }
-    
+
     &:hover .status-content {
       transform: scale(1.05);
     }
@@ -258,7 +262,7 @@ const formatLastSync = (timestamp: string): string => {
     .status-text {
       color: #c0c4cc;
     }
-    
+
     opacity: 0.7;
   }
 }
@@ -291,16 +295,16 @@ const formatLastSync = (timestamp: string): string => {
   &--small {
     font-size: 12px;
     gap: 4px;
-    
+
     .status-icon {
       font-size: 12px;
     }
   }
-  
+
   &--large {
     font-size: 16px;
     gap: 8px;
-    
+
     .status-icon {
       font-size: 20px;
     }
@@ -322,7 +326,7 @@ const formatLastSync = (timestamp: string): string => {
         color: #73767a;
       }
     }
-    
+
     &.status-disabled {
       .status-icon,
       .status-text {
@@ -337,7 +341,7 @@ const formatLastSync = (timestamp: string): string => {
   .oauth-status-indicator {
     font-size: 13px;
     gap: 4px;
-    
+
     .status-icon {
       font-size: 14px;
     }

@@ -1,24 +1,5 @@
-<template>
-  <el-button
-    :type="buttonType"
-    :size="size"
-    :loading="loading"
-    :disabled="disabled"
-    :style="buttonStyle"
-    :class="buttonClass"
-    @click="handleClick"
-  >
-    <template #icon>
-      <el-icon v-if="!loading">
-        <component :is="iconComponent" />
-      </el-icon>
-    </template>
-    <span class="provider-button-text">{{ buttonText }}</span>
-  </el-button>
-</template>
-
 <script setup lang="ts">
-import { computed, defineComponent } from 'vue'
+import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { OAuthProviderName } from '../../api/types'
 import { getProviderConfig } from '../../api/userOAuthApi'
@@ -51,15 +32,15 @@ const props = withDefaults(defineProps<Props>(), {
   loading: false,
   disabled: false,
   iconOnly: false,
-  action: 'bind'
+  action: 'bind',
 })
+
+const emit = defineEmits<Emits>()
 
 // Define emits
 interface Emits {
   (e: 'click', provider: OAuthProviderName): void
 }
-
-const emit = defineEmits<Emits>()
 
 // Composables
 const { t } = useI18n()
@@ -69,15 +50,15 @@ const providerConfig = computed(() => getProviderConfig(props.provider))
 
 // Compute button type based on variant
 const buttonType = computed(() => {
-  if (props.variant === 'outlined') return 'default'
-  if (props.variant === 'text') return 'text'
+  if (props.variant === 'outlined') { return 'default' }
+  if (props.variant === 'text') { return 'text' }
   return 'primary'
 })
 
 // Compute button text
 const buttonText = computed(() => {
-  if (props.iconOnly) return ''
-  if (props.text) return props.text
+  if (props.iconOnly) { return '' }
+  if (props.text) { return props.text }
 
   const providerName = props.provider
 
@@ -85,7 +66,7 @@ const buttonText = computed(() => {
     bind: t('oauth2.personal.actions.bind', { provider: providerName }),
     unbind: t('oauth2.personal.actions.unbind', { provider: providerName }),
     login: t('oauth2.personal.actions.login', { provider: providerName }),
-    connect: t('oauth2.personal.actions.connect', { provider: providerName })
+    connect: t('oauth2.personal.actions.connect', { provider: providerName }),
   }
 
   return actionTexts[props.action]
@@ -104,11 +85,13 @@ const buttonStyle = computed(() => {
     styles.backgroundColor = config.brand_color
     styles.borderColor = config.brand_color
     styles.color = '#ffffff'
-  } else if (props.variant === 'outlined') {
+  }
+  else if (props.variant === 'outlined') {
     styles.borderColor = config.brand_color
     styles.color = config.brand_color
     styles.backgroundColor = 'transparent'
-  } else if (props.variant === 'text') {
+  }
+  else if (props.variant === 'text') {
     styles.color = config.brand_color
   }
 
@@ -135,7 +118,7 @@ const iconComponents = {
   gitee: 'IconGitee',
   feishu: 'IconFeishu',
   wechat: 'IconWechat',
-  qq: 'IconQQ'
+  qq: 'IconQQ',
 }
 
 const iconComponent = computed(() => {
@@ -143,12 +126,31 @@ const iconComponent = computed(() => {
 })
 
 // Handle button click
-const handleClick = () => {
+function handleClick() {
   if (!props.loading && !props.disabled) {
     emit('click', props.provider)
   }
 }
 </script>
+
+<template>
+  <el-button
+    :type="buttonType"
+    :size="size"
+    :loading="loading"
+    :disabled="disabled"
+    :style="buttonStyle"
+    :class="buttonClass"
+    @click="handleClick"
+  >
+    <template #icon>
+      <el-icon v-if="!loading">
+        <component :is="iconComponent" />
+      </el-icon>
+    </template>
+    <span class="provider-button-text">{{ buttonText }}</span>
+  </el-button>
+</template>
 
 <style lang="scss" scoped>
 .oauth-provider-button {

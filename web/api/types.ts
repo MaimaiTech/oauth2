@@ -1,6 +1,6 @@
 /**
  * OAuth2 Plugin TypeScript Type Definitions
- * 
+ *
  * Defines interfaces and types for OAuth2 providers and user bindings
  * following MineAdmin patterns and backend API structure
  */

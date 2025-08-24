@@ -12,13 +12,19 @@ declare(strict_types=1);
 
 namespace Plugin\MaimaiTech\OAuth2\Service;
 
+use App\Model\Permission\User;
+use App\Repository\Permission\UserRepository;
+use App\Service\PassportService;
 use Carbon\Carbon;
 use Hyperf\Collection\Collection;
+use Mine\Jwt\Factory;
+use Mine\JwtAuth\Event\UserLoginEvent;
 use Plugin\MaimaiTech\OAuth2\Exception\OAuthException;
 use Plugin\MaimaiTech\OAuth2\Model\OAuthProvider;
 use Plugin\MaimaiTech\OAuth2\Model\UserOAuthAccount;
 use Plugin\MaimaiTech\OAuth2\Repository\OAuthStateRepository;
 use Plugin\MaimaiTech\OAuth2\Repository\UserOAuthAccountRepository;
+use Psr\EventDispatcher\EventDispatcherInterface;
 
 /**
  * Core OAuth2 service for handling OAuth flows and account management.
@@ -28,7 +34,11 @@ final class OAuthService
     public function __construct(
         private readonly ProviderService $providerService,
         private readonly UserOAuthAccountRepository $accountRepository,
-        private readonly OAuthStateRepository $stateRepository
+        private readonly OAuthStateRepository $stateRepository,
+        private readonly PassportService $passportService,
+        private readonly UserRepository $userRepository,
+        private readonly EventDispatcherInterface $dispatcher,
+        private readonly Factory $jwtFactory
     ) {}
 
     /**
@@ -122,6 +132,152 @@ final class OAuthService
                 ['code' => $code, 'state' => $state]
             );
         }
+    }
+
+    /**
+     * Handle OAuth login flow - similar to callback but returns JWT tokens for login.
+     *
+     * @throws OAuthException
+     */
+    public function handleOAuthLogin(string $provider, string $code, string $state, string $clientIp, string $userAgent = ''): array
+    {
+        // Validate and consume state parameter
+        $stateData = $this->stateRepository->validateAndConsumeState($state, $provider);
+        if (! $stateData) {
+            throw OAuthException::stateError(
+                'Invalid or expired OAuth state parameter',
+                $provider,
+                ['state' => $state]
+            );
+        }
+
+        // Get provider configuration
+        $providerConfig = $this->providerService->getProvider($provider);
+        if (! $providerConfig || ! $providerConfig->isEnabled()) {
+            throw OAuthException::configurationError(
+                "Provider '{$provider}' is not available",
+                $provider
+            );
+        }
+
+        // Create OAuth client
+        $client = OAuthClientFactory::create($providerConfig);
+
+        try {
+            // Exchange code for access token
+            $tokenData = $client->getAccessToken($code);
+
+            // Get user information
+            $userData = $client->getUserInfo($tokenData['access_token']);
+            $userInfo = $userData['user_data'] ?? $userData;
+
+            // Look for existing OAuth binding
+            $oauthAccount = $this->accountRepository->findByProviderUser($provider, $userInfo['id']);
+
+            if ($oauthAccount) {
+                // User exists with OAuth binding - login
+                $user = $this->userRepository->findById($oauthAccount->user_id);
+                if (! $user) {
+                    throw OAuthException::flowError(
+                        'User account not found',
+                        $provider,
+                        ['user_id' => $oauthAccount->user_id]
+                    );
+                }
+
+                // Update OAuth account info
+                $oauthAccount->updateTokens(
+                    $tokenData['access_token'],
+                    $tokenData['refresh_token'] ?? null,
+                    isset($tokenData['expires_in'])
+                        ? Carbon::now()->addSeconds($tokenData['expires_in'])
+                        : null
+                );
+                $oauthAccount->updateLoginInfo($clientIp);
+
+                // Generate JWT tokens for the user (direct JWT generation for OAuth)
+                $loginResult = $this->generateJwtForUser($user, $clientIp, $userAgent);
+
+                return [
+                    'action' => 'login',
+                    'user' => [
+                        'id' => $user->id,
+                        'username' => $user->username,
+                        'email' => $user->email,
+                        'nickname' => $user->nickname,
+                        'avatar' => $user->avatar,
+                    ],
+                    'oauth_account' => [
+                        'id' => $oauthAccount->id,
+                        'provider' => $oauthAccount->provider,
+                        'provider_user_id' => $oauthAccount->provider_user_id,
+                        'provider_username' => $oauthAccount->provider_username,
+                        'provider_email' => $oauthAccount->provider_email,
+                        'provider_avatar' => $oauthAccount->provider_avatar,
+                    ],
+                    'tokens' => $loginResult,
+                ];
+            }
+
+            // No existing binding found - need to register or link account
+            throw OAuthException::flowError(
+                'No account found for this OAuth provider. Please register first or bind your account.',
+                $provider,
+                [
+                    'provider_user_id' => $userInfo['id'],
+                    'provider_username' => $userInfo['username'] ?? $userInfo['name'] ?? '',
+                    'provider_email' => $userInfo['email'] ?? '',
+                ]
+            );
+        } catch (OAuthException $e) {
+            throw $e;
+        } catch (\Throwable $e) {
+            throw OAuthException::flowError(
+                "OAuth login failed: {$e->getMessage()}",
+                $provider,
+                ['code' => $code, 'state' => $state]
+            );
+        }
+    }
+
+    /**
+     * Get authorization URL for OAuth login (without user binding).
+     *
+     * @throws OAuthException
+     */
+    public function getOAuthLoginUrl(string $provider, ?string $redirectUri = null, string $clientIp = '0.0.0.0', string $userAgent = ''): string
+    {
+        // Check rate limiting
+        $this->checkRateLimit($provider, null, $clientIp);
+
+        // Get provider configuration
+        $providerConfig = $this->providerService->getProvider($provider);
+        if (! $providerConfig || ! $providerConfig->isEnabled()) {
+            throw OAuthException::configurationError(
+                "Provider '{$provider}' is not available",
+                $provider
+            );
+        }
+
+        // Create OAuth client
+        $client = OAuthClientFactory::create($providerConfig);
+
+        // Create state parameter for CSRF protection (no user ID for login flow)
+        $payload = ['action' => 'login'];
+        if ($redirectUri) {
+            $payload['redirect_uri'] = $redirectUri;
+        }
+
+        $state = $this->stateRepository->createState(
+            provider: $provider,
+            userId: null, // No user ID for login flow
+            payload: $payload,
+            clientIp: $clientIp,
+            userAgent: $userAgent
+        );
+
+        // Generate authorization URL
+        return $client->getAuthorizationUrl($state->state);
     }
 
     /**
@@ -349,10 +505,14 @@ final class OAuthService
 
     /**
      * Get list of all user bindings with pagination and filtering.
+     * Returns data in MineAdmin ma-pro-table compatible format.
      */
     public function listAllUserBindings(array $filters = [], int $page = 1, int $pageSize = 15): array
     {
         $query = $this->accountRepository->getModel()->newQuery();
+
+        // Include user relationship for table display
+        $query->with(['user:id,username,email,avatar']);
 
         // Apply filters
         if (! empty($filters['provider'])) {
@@ -364,14 +524,22 @@ final class OAuthService
         if (! empty($filters['user_id'])) {
             $query->where('user_id', $filters['user_id']);
         }
+        if (! empty($filters['username'])) {
+            $query->whereHas('user', static function ($userQuery) use ($filters) {
+                $userQuery->where('username', 'like', '%' . $filters['username'] . '%');
+            });
+        }
+        if (! empty($filters['provider_username'])) {
+            $query->where('provider_username', 'like', '%' . $filters['provider_username'] . '%');
+        }
         if (! empty($filters['provider_email'])) {
             $query->where('provider_email', 'like', '%' . $filters['provider_email'] . '%');
         }
-        if (! empty($filters['created_at_start'])) {
-            $query->where('created_at', '>=', $filters['created_at_start']);
+        if (! empty($filters['date_from'])) {
+            $query->where('created_at', '>=', $filters['date_from'] . ' 00:00:00');
         }
-        if (! empty($filters['created_at_end'])) {
-            $query->where('created_at', '<=', $filters['created_at_end']);
+        if (! empty($filters['date_to'])) {
+            $query->where('created_at', '<=', $filters['date_to'] . ' 23:59:59');
         }
 
         // Add sorting
@@ -382,12 +550,13 @@ final class OAuthService
         $total = $query->count();
         $bindings = $query->skip($offset)->take($pageSize)->get();
 
+        // Return in MineAdmin standard format
         return [
-            'data' => $bindings,
+            'list' => $bindings->toArray(),
             'total' => $total,
             'page' => $page,
-            'pageSize' => $pageSize,
-            'totalPages' => ceil($total / $pageSize),
+            'page_size' => $pageSize,
+            'total_pages' => (int) ceil($total / $pageSize),
         ];
     }
 
@@ -733,5 +902,31 @@ final class OAuthService
 
         $binding->status = $status;
         return $binding->save();
+    }
+
+    /**
+     * Generate JWT tokens for user (for OAuth login).
+     */
+    private function generateJwtForUser(User $user, string $clientIp, string $userAgent): array
+    {
+        // Check if user is enabled
+        if ($user->status->isDisable()) {
+            throw OAuthException::flowError(
+                'User account is disabled',
+                'oauth',
+                ['user_id' => $user->id]
+            );
+        }
+
+        // Dispatch login event
+        $this->dispatcher->dispatch(new UserLoginEvent($user, $clientIp, $userAgent, $userAgent));
+
+        // Generate JWT tokens
+        $jwt = $this->jwtFactory->get('default');
+        return [
+            'access_token' => $jwt->builderAccessToken((string) $user->id)->toString(),
+            'refresh_token' => $jwt->builderRefreshToken((string) $user->id)->toString(),
+            'expire_at' => (int) $jwt->getConfig('ttl', 0),
+        ];
     }
 }

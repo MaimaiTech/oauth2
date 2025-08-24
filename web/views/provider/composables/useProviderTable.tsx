@@ -1,11 +1,11 @@
-import { computed, reactive } from 'vue'
+import { computed } from 'vue'
 import type { MaProTableSchema } from '@mineadmin/pro-table'
-import { Search, Link, Copy, TestTube2, Plus, Connection } from '@element-plus/icons-vue'
+import { Copy, Link, Search, TestTube2 } from '@element-plus/icons-vue'
 import type { OAuthProvider } from '../../../api/types'
-import { 
-  getProviderOptions,
+import {
+  getProviderBrandColor,
   getProviderDisplayName,
-  getProviderBrandColor 
+  getProviderOptions,
 } from '../../../api/oauthApi'
 
 interface SearchFormModel {
@@ -28,7 +28,7 @@ export function useProviderTable(
     onTest: (id: number) => void
     onToggle: (id: number, enabled: boolean) => void
     onCopy: (text: string, label: string) => void
-  }
+  },
 ) {
   const providerOptions = computed(() => getProviderOptions())
 
@@ -47,14 +47,14 @@ export function useProviderTable(
       cellRender: ({ row }: { row: OAuthProvider }) => (
         <div class="flex items-center space-x-3">
           <div
-            class="w-8 h-8 rounded-lg flex items-center justify-center text-white text-sm font-bold shadow-sm"
+            class="h-8 w-8 flex items-center justify-center rounded-lg text-sm text-white font-bold shadow-sm"
             style={{ backgroundColor: getProviderBrandColor(row.name) }}
             title={getProviderDisplayName(row.name)}
           >
             {getProviderDisplayName(row.name).charAt(0)}
           </div>
           <div class="flex flex-col">
-            <span class="font-medium text-gray-900">{getProviderDisplayName(row.name)}</span>
+            <span class="text-gray-900 font-medium">{getProviderDisplayName(row.name)}</span>
             <span class="text-xs text-gray-500">{row.name}</span>
           </div>
         </div>
@@ -74,11 +74,12 @@ export function useProviderTable(
       cellRender: ({ row }: { row: OAuthProvider }) => (
         <div class="flex items-center space-x-2">
           <el-tooltip content="点击复制完整客户端ID" placement="top">
-            <code 
-              class="font-mono text-sm bg-gray-100 px-2 py-1 rounded cursor-pointer hover:bg-gray-200 transition-colors"
+            <code
+              class="cursor-pointer rounded bg-gray-100 px-2 py-1 text-sm font-mono transition-colors hover:bg-gray-200"
               onClick={() => handlers.onCopy(row.client_id, '客户端ID')}
             >
-              {row.client_id.substring(0, 16)}...
+              {row.client_id.substring(0, 16)}
+              ...
             </code>
           </el-tooltip>
           <el-button
@@ -98,8 +99,8 @@ export function useProviderTable(
       cellRender: ({ row }: { row: OAuthProvider }) => (
         <div class="flex items-center space-x-2">
           <el-tooltip content={row.redirect_uri} placement="top">
-            <span 
-              class="text-sm text-blue-600 cursor-pointer hover:text-blue-800 transition-colors truncate max-w-[160px]"
+            <span
+              class="max-w-[160px] cursor-pointer truncate text-sm text-blue-600 transition-colors hover:text-blue-800"
               onClick={() => handlers.onCopy(row.redirect_uri, '回调地址')}
             >
               {row.redirect_uri}
@@ -123,7 +124,7 @@ export function useProviderTable(
         const scopes = row.scopes || []
         const displayScopes = scopes.slice(0, 2)
         const remainingCount = scopes.length - 2
-        
+
         return (
           <div class="flex flex-wrap gap-1">
             {displayScopes.map(scope => (
@@ -132,12 +133,13 @@ export function useProviderTable(
               </el-tag>
             ))}
             {remainingCount > 0 && (
-              <el-tooltip 
-                content={scopes.slice(2).join(', ')} 
+              <el-tooltip
+                content={scopes.slice(2).join(', ')}
                 placement="top"
               >
                 <el-tag size="small" type="info" effect="plain">
-                  +{remainingCount}
+                  +
+                  {remainingCount}
                 </el-tag>
               </el-tooltip>
             )}
@@ -154,14 +156,16 @@ export function useProviderTable(
         const stats = row.stats || { total_bindings: 0, active_bindings: 0 }
         return (
           <div class="text-center">
-            <div class="text-lg font-bold text-blue-600">
+            <div class="text-lg text-blue-600 font-bold">
               {stats.total_bindings}
             </div>
             <div class="text-xs text-gray-500">
-              活跃: {stats.active_bindings}
+              活跃:
+              {' '}
+              {stats.active_bindings}
             </div>
             {stats.last_used_at && (
-              <div class="text-xs text-gray-400 mt-1">
+              <div class="mt-1 text-xs text-gray-400">
                 {new Date(stats.last_used_at).toLocaleDateString()}
               </div>
             )}
@@ -214,10 +218,10 @@ export function useProviderTable(
       width: 220,
       fixed: 'right',
       cellRender: ({ row }: { row: OAuthProvider }) => {
-        const isOperating = actionStates.testing.has(row.id) || 
-                           actionStates.toggling.has(row.id) || 
-                           actionStates.deleting.has(row.id)
-        
+        const isOperating = actionStates.testing.has(row.id)
+          || actionStates.toggling.has(row.id)
+          || actionStates.deleting.has(row.id)
+
         return (
           <div class="flex space-x-1">
             <el-button
@@ -280,14 +284,14 @@ export function useProviderTable(
                 default: () => (
                   <div class="flex items-center space-x-2">
                     <div
-                      class="w-4 h-4 rounded flex items-center justify-center text-white text-xs"
+                      class="h-4 w-4 flex items-center justify-center rounded text-xs text-white"
                       style={{ backgroundColor: getProviderBrandColor(option.value) }}
                     >
                       {option.label.charAt(0)}
                     </div>
                     <span>{option.label}</span>
                   </div>
-                )
+                ),
               }}
             </el-option>
           ))}
@@ -311,7 +315,7 @@ export function useProviderTable(
                 <div class="flex items-center space-x-2">
                   <el-tag size="small" type="success">启用</el-tag>
                 </div>
-              )
+              ),
             }}
           </el-option>
           <el-option label="禁用" value={0}>
@@ -320,7 +324,7 @@ export function useProviderTable(
                 <div class="flex items-center space-x-2">
                   <el-tag size="small" type="danger">禁用</el-tag>
                 </div>
-              )
+              ),
             }}
           </el-option>
         </el-select>
@@ -337,7 +341,7 @@ export function useProviderTable(
           class="w-full"
         >
           {{
-            prefix: () => <el-icon><Search /></el-icon>
+            prefix: () => <el-icon><Search /></el-icon>,
           }}
         </el-input>
       ),

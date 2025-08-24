@@ -4,7 +4,7 @@ oauth2:
     bindings: "User Bindings"
     statistics: "Statistics"
     personalBindings: "Third-party Accounts"
-  
+
   providers:
     title: "OAuth Provider Management"
     create: "Add Provider"
@@ -15,7 +15,7 @@ oauth2:
     testConnection: "Test Connection"
     search: "Search providers"
     refresh: "Refresh"
-    
+
     form:
       name: "Provider Name"
       displayName: "Display Name"
@@ -26,7 +26,7 @@ oauth2:
       status: "Status"
       sort: "Sort Order"
       description: "Description"
-      
+
       placeholders:
         name: "Select OAuth provider"
         displayName: "Enter display name"
@@ -35,7 +35,7 @@ oauth2:
         redirectUri: "Enter redirect URI"
         scopes: "Enter required scopes"
         description: "Enter description"
-        
+
       validation:
         nameRequired: "Provider name is required"
         displayNameRequired: "Display name is required"
@@ -43,7 +43,7 @@ oauth2:
         clientSecretRequired: "Client secret is required"
         redirectUriRequired: "Redirect URI is required"
         redirectUriInvalid: "Please enter a valid URL"
-        
+
     columns:
       id: "ID"
       name: "Provider"
@@ -52,18 +52,18 @@ oauth2:
       createdAt: "Created At"
       updatedAt: "Updated At"
       actions: "Actions"
-      
+
     status:
       enabled: "Enabled"
       disabled: "Disabled"
-      
+
     actions:
       view: "View"
       edit: "Edit"
       delete: "Delete"
       enable: "Enable"
       disable: "Disable"
-      
+
     messages:
       createSuccess: "Provider created successfully"
       updateSuccess: "Provider updated successfully"
@@ -73,68 +73,115 @@ oauth2:
       testConnectionSuccess: "Connection test successful"
       testConnectionFailed: "Connection test failed"
       deleteConfirm: "Are you sure you want to delete this provider?"
-      
+
   bindings:
-    title: "User OAuth Bindings"
-    search: "Search users"
+    title: "User OAuth Binding Management"
     refresh: "Refresh"
     unbind: "Unbind"
-    
+    batchActions: "Batch Actions"
+
     columns:
       id: "ID"
       userId: "User ID"
+      userInfo: "User Info"
       username: "Username"
-      provider: "Provider"
+      provider: "OAuth Provider"
+      providerUser: "Third-party User"
       providerUserId: "Provider User ID"
+      providerEmail: "Provider Email"
       email: "Email"
       nickname: "Nickname"
       avatar: "Avatar"
+      status: "Status"
+      tokenStatus: "Token Status"
       bindTime: "Bind Time"
       lastLogin: "Last Login"
+      createdAt: "Created At"
       actions: "Actions"
-      
+
+    search:
+      provider: "Provider"
+      status: "Status"
+      userId: "User ID"
+      userIdPlaceholder: "Enter user ID"
+      username: "Username"
+      usernamePlaceholder: "Search username"
+      providerUsername: "Provider Username"
+      providerUsernamePlaceholder: "Search provider username"
+      dateRange: "Date Range"
+
     actions:
       view: "View Details"
-      unbind: "Unbind Account"
-      
+      unbind: "Unbind"
+      batchUnbind: "Batch Unbind"
+      batchDisable: "Batch Disable"
+
+    success:
+      unbind: "Force unbind successful"
+      batchUnbind: "Batch unbind successful"
+      batchDisable: "Batch disable successful"
+
+    error:
+      unbind: "Unbind failed"
+      batchUnbind: "Batch unbind failed"
+      batchDisable: "Batch disable failed"
+
+    confirm:
+      forceUnbind: "Are you sure you want to force unbind this OAuth account? Users will not be able to login through this third-party account after unbinding."
+      batchUnbind: "Are you sure you want to batch unbind the selected {count} OAuth accounts?"
+      batchDisable: "Are you sure you want to batch disable the selected {count} OAuth accounts?"
+
+    warning:
+      noSelection: "Please select OAuth accounts to operate"
+
+    export:
+      button: "Export Data"
+      preparing: "Preparing export data..."
+      inProgress: "Export in progress..."
+      success: "Export successful"
+      failed: "Export failed"
+
+    empty:
+      description: "No OAuth binding records"
+
     messages:
       unbindSuccess: "Account unbound successfully"
       unbindConfirm: "Are you sure you want to unbind this OAuth account?"
-      
+
     filters:
       provider: "Filter by provider"
       status: "Filter by status"
       all: "All"
-      
+
   statistics:
     title: "OAuth Statistics"
     overview: "Overview"
     trends: "Trends"
-    
+
     cards:
       totalUsers: "Total OAuth Users"
       activeUsers: "Active Users"
       newUsers: "New Users Today"
       totalProviders: "Total Providers"
-      
+
     charts:
       userGrowth: "User Growth Trend"
       providerDistribution: "Provider Distribution"
       dailyLogins: "Daily OAuth Logins"
-      
+
     periods:
       today: "Today"
       week: "This Week"
       month: "This Month"
       year: "This Year"
-      
+
   personal:
     title: "My Third-party Accounts"
     subtitle: "Manage your connected OAuth accounts"
     noAccounts: "No third-party accounts connected"
     bindAccount: "Bind Account"
     unbindAccount: "Unbind Account"
-    
+
     account:
       provider: "Provider"
       nickname: "Nickname"
@@ -142,24 +189,24 @@ oauth2:
       bindTime: "Bind Time"
       lastLogin: "Last Login"
       status: "Status"
-      
+
     status:
       active: "Active"
       inactive: "Inactive"
-      
+
     actions:
       bind: "Bind {provider}"
       unbind: "Unbind {provider}"
       login: "Login with {provider}"
       connect: "Connect {provider}"
-      
+
     messages:
       bindSuccess: "Account bound successfully"
       unbindSuccess: "Account unbound successfully"
       bindFailed: "Failed to bind account"
       unbindFailed: "Failed to unbind account"
       unbindConfirm: "Are you sure you want to unbind your {provider} account?"
-      
+
   providerInfo:
     dingtalk:
       name: "DingTalk"
@@ -179,14 +226,14 @@ oauth2:
     qq:
       name: "QQ"
       description: "Instant messaging service"
-      
+
   callback:
     title: "OAuth Callback Processing"
     processing: "Processing OAuth callback..."
     success: "OAuth authentication successful"
     error: "OAuth authentication failed"
     redirecting: "Redirecting..."
-    
+
     errors:
       missingProvider: "Missing OAuth provider parameter"
       unsupportedProvider: "Unsupported OAuth provider"
@@ -198,11 +245,12 @@ oauth2:
       networkError: "Network connection error"
       timeoutError: "Request timeout"
       validationError: "Parameter validation failed"
-      
+
   common:
     loading: "Loading..."
     noData: "No data available"
     refresh: "Refresh"
+    refreshSuccess: "Data refreshed"
     search: "Search"
     reset: "Reset"
     cancel: "Cancel"
@@ -219,12 +267,22 @@ oauth2:
     submit: "Submit"
     close: "Close"
     retry: "Retry"
-    
+    all: "All"
+    normal: "Normal"
+    disabled: "Disabled"
+    pending: "Pending"
+    actions: "Actions"
+    to: "to"
+    startDate: "Start Date"
+    endDate: "End Date"
+    collapse: "Collapse"
+    expand: "Expand"
+
     pagination:
       total: "Total {total} items"
       page: "Page"
       pageSize: "Items per page"
-      
+
     validation:
       required: "This field is required"
       invalid: "Invalid format"

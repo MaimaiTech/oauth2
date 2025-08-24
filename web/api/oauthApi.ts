@@ -1,31 +1,29 @@
 /**
  * OAuth2 Plugin API Client
- * 
+ *
  * HTTP client functions for OAuth2 providers and user bindings management
  * Uses MineAdmin's useHttp() hook for consistent API communication
  */
 
 import type {
-  OAuthProvider,
-  CreateProviderRequest,
-  UpdateProviderRequest,
-  ProviderQueryParams,
-  ProviderToggleRequest,
-  ProviderListResponse,
-  ProviderResponse,
-  TestConnectionResponse,
-  UserOAuthAccount,
-  UserBindingsQueryParams,
-  UserBindingsListResponse,
-  UserBindingsResponse,
-  ForceUnbindResponse,
-  StatisticsResponse,
   BatchOperationRequest,
   BatchOperationResponse,
+  CreateProviderRequest,
   ExportRequest,
   ExportResponse,
-  ProviderOption,
+  ForceUnbindResponse,
+  OAuthProvider,
   OAuthProviderName,
+  ProviderListResponse,
+  ProviderOption,
+  ProviderQueryParams,
+  ProviderResponse,
+  StatisticsResponse,
+  TestConnectionResponse,
+  UpdateProviderRequest,
+  UserBindingsListResponse,
+  UserBindingsQueryParams,
+  UserBindingsResponse,
 } from './types'
 
 /**
@@ -260,32 +258,34 @@ export function formatProviderConfig(provider: OAuthProvider): Record<string, an
  */
 export function validateProviderConfig(provider: Partial<CreateProviderRequest>): string[] {
   const errors: string[] = []
-  
+
   if (!provider.name) {
     errors.push('Provider name is required')
   }
-  
+
   if (!provider.display_name) {
     errors.push('Display name is required')
   }
-  
+
   if (!provider.client_id) {
     errors.push('Client ID is required')
   }
-  
+
   if (!provider.client_secret) {
     errors.push('Client secret is required')
   }
-  
+
   if (!provider.redirect_uri) {
     errors.push('Redirect URI is required')
-  } else {
+  }
+  else {
     try {
       new URL(provider.redirect_uri)
-    } catch {
+    }
+    catch {
       errors.push('Redirect URI must be a valid URL')
     }
   }
-  
+
   return errors
 }

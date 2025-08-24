@@ -1,13 +1,13 @@
 <!--
  - OAuth2 Statistics Dashboard
- - 
+ -
  - Provides comprehensive statistics and charts for OAuth2 usage
  - Includes provider distribution, binding trends, and performance metrics
  - Uses ECharts for data visualization
 -->
 <script setup lang="tsx">
 import type { BindingStatistics } from '../../api/types'
-import { getBindingStatistics, getProviderDisplayName, getProviderBrandColor } from '../../api/oauthApi'
+import { getBindingStatistics, getProviderBrandColor, getProviderDisplayName } from '../../api/oauthApi'
 import { useMessage } from '@/hooks/useMessage.ts'
 
 defineOptions({ name: 'oauth2:statistics' })
@@ -31,17 +31,19 @@ async function fetchStatistics() {
   try {
     const response = await getBindingStatistics(period.value)
     statisticsData.value = response.data
-  } catch (error: any) {
+  }
+  catch (error: any) {
     msg.error(error.message || '获取统计数据失败')
-  } finally {
+  }
+  finally {
     loading.value = false
   }
 }
 
 // 提供者分布图表配置
 const providerDistributionOption = computed(() => {
-  if (!statisticsData.value?.provider_distribution) return null
-  
+  if (!statisticsData.value?.provider_distribution) { return null }
+
   return {
     title: {
       text: '提供者分布',
@@ -81,8 +83,8 @@ const providerDistributionOption = computed(() => {
 
 // 趋势图表配置
 const trendOption = computed(() => {
-  if (!statisticsData.value?.time_series) return null
-  
+  if (!statisticsData.value?.time_series) { return null }
+
   return {
     title: {
       text: '绑定趋势',
@@ -136,64 +138,76 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="statistics-dashboard" v-loading="loading">
+  <div v-loading="loading" class="statistics-dashboard">
     <!-- 统计卡片 -->
     <el-row :gutter="20" class="mb-6">
       <el-col :span="6">
         <el-card shadow="hover" class="stat-card">
           <div class="stat-content">
             <div class="stat-icon total">
-              <i class="i-solar:users-group-two-rounded-bold"></i>
+              <i class="i-solar:users-group-two-rounded-bold" />
             </div>
             <div class="stat-info">
-              <div class="stat-value">{{ statisticsData?.total_bindings || 0 }}</div>
-              <div class="stat-label">总绑定数</div>
+              <div class="stat-value">
+                {{ statisticsData?.total_bindings || 0 }}
+              </div>
+              <div class="stat-label">
+                总绑定数
+              </div>
             </div>
           </div>
         </el-card>
       </el-col>
-      
+
       <el-col :span="6">
         <el-card shadow="hover" class="stat-card">
           <div class="stat-content">
             <div class="stat-icon providers">
-              <i class="i-solar:shield-network-bold"></i>
+              <i class="i-solar:shield-network-bold" />
             </div>
             <div class="stat-info">
               <div class="stat-value">
                 {{ Object.keys(statisticsData?.active_providers || {}).length }}
               </div>
-              <div class="stat-label">活跃提供者</div>
+              <div class="stat-label">
+                活跃提供者
+              </div>
             </div>
           </div>
         </el-card>
       </el-col>
-      
+
       <el-col :span="6">
         <el-card shadow="hover" class="stat-card">
           <div class="stat-content">
             <div class="stat-icon recent">
-              <i class="i-solar:clock-circle-bold"></i>
+              <i class="i-solar:clock-circle-bold" />
             </div>
             <div class="stat-info">
-              <div class="stat-value">{{ statisticsData?.recent_bindings || 0 }}</div>
-              <div class="stat-label">近期新增</div>
+              <div class="stat-value">
+                {{ statisticsData?.recent_bindings || 0 }}
+              </div>
+              <div class="stat-label">
+                近期新增
+              </div>
             </div>
           </div>
         </el-card>
       </el-col>
-      
+
       <el-col :span="6">
         <el-card shadow="hover" class="stat-card">
           <div class="stat-content">
             <div class="stat-icon growth">
-              <i class="i-solar:chart-square-bold"></i>
+              <i class="i-solar:chart-square-bold" />
             </div>
             <div class="stat-info">
               <div class="stat-value growth-value">
                 {{ (statisticsData?.monthly_growth || 0).toFixed(1) }}%
               </div>
-              <div class="stat-label">月度增长</div>
+              <div class="stat-label">
+                月度增长
+              </div>
             </div>
           </div>
         </el-card>
@@ -203,7 +217,7 @@ onMounted(() => {
     <!-- 控制面板 -->
     <el-card class="mb-6">
       <template #header>
-        <div class="flex justify-between items-center">
+        <div class="flex items-center justify-between">
           <span class="font-medium">数据分析</span>
           <div class="flex space-x-3">
             <el-radio-group v-model="period" size="small">
@@ -216,36 +230,36 @@ onMounted(() => {
               </el-radio-button>
             </el-radio-group>
             <el-button size="small" @click="fetchStatistics">
-              <i class="i-solar:refresh-outline mr-1"></i>
+              <i class="i-solar:refresh-outline mr-1" />
               刷新
             </el-button>
           </div>
         </div>
       </template>
-      
+
       <el-row :gutter="20">
         <!-- 提供者分布 -->
         <el-col :span="12">
           <div class="chart-container">
-            <div 
+            <div
               v-if="providerDistributionOption"
-              id="provider-chart" 
-              class="chart"
+              id="provider-chart"
               v-echarts="providerDistributionOption"
-            ></div>
+              class="chart"
+            />
             <el-empty v-else description="暂无分布数据" />
           </div>
         </el-col>
-        
+
         <!-- 绑定趋势 -->
         <el-col :span="12">
           <div class="chart-container">
-            <div 
+            <div
               v-if="trendOption"
-              id="trend-chart" 
-              class="chart"
+              id="trend-chart"
               v-echarts="trendOption"
-            ></div>
+              class="chart"
+            />
             <el-empty v-else description="暂无趋势数据" />
           </div>
         </el-col>
@@ -257,7 +271,7 @@ onMounted(() => {
       <template #header>
         <span class="font-medium">提供者详细统计</span>
       </template>
-      
+
       <el-table
         v-if="statisticsData?.provider_distribution"
         :data="statisticsData.provider_distribution"
@@ -267,7 +281,7 @@ onMounted(() => {
           <template #default="{ row }">
             <div class="flex items-center space-x-2">
               <div
-                class="w-6 h-6 rounded flex items-center justify-center text-white text-xs font-bold"
+                class="h-6 w-6 flex items-center justify-center rounded text-xs text-white font-bold"
                 :style="{ backgroundColor: getProviderBrandColor(row.provider) }"
               >
                 {{ getProviderDisplayName(row.provider).charAt(0) }}
@@ -276,48 +290,54 @@ onMounted(() => {
             </div>
           </template>
         </el-table-column>
-        
+
         <el-table-column prop="count" label="绑定数量" width="120">
           <template #default="{ row }">
-            <el-tag type="primary">{{ row.count }}</el-tag>
+            <el-tag type="primary">
+              {{ row.count }}
+            </el-tag>
           </template>
         </el-table-column>
-        
+
         <el-table-column prop="percentage" label="占比" width="120">
           <template #default="{ row }">
             <div class="flex items-center space-x-2">
               <span>{{ row.percentage.toFixed(1) }}%</span>
               <div class="progress-bar">
-                <div 
+                <div
                   class="progress-fill"
-                  :style="{ 
+                  :style="{
                     width: `${row.percentage}%`,
-                    backgroundColor: getProviderBrandColor(row.provider)
+                    backgroundColor: getProviderBrandColor(row.provider),
                   }"
-                ></div>
+                />
               </div>
             </div>
           </template>
         </el-table-column>
-        
+
         <el-table-column prop="growth" label="增长率" width="120">
           <template #default="{ row }">
-            <el-tag 
+            <el-tag
               :type="row.growth > 0 ? 'success' : row.growth < 0 ? 'danger' : 'info'"
             >
               {{ row.growth > 0 ? '+' : '' }}{{ row.growth.toFixed(1) }}%
             </el-tag>
           </template>
         </el-table-column>
-        
+
         <el-table-column label="状态">
           <template #default="{ row }">
-            <el-tag type="success" v-if="row.count > 0">活跃</el-tag>
-            <el-tag type="info" v-else>未使用</el-tag>
+            <el-tag v-if="row.count > 0" type="success">
+              活跃
+            </el-tag>
+            <el-tag v-else type="info">
+              未使用
+            </el-tag>
           </template>
         </el-table-column>
       </el-table>
-      
+
       <el-empty v-else description="暂无统计数据" />
     </el-card>
   </div>
@@ -336,7 +356,7 @@ onMounted(() => {
     align-items: center;
     justify-content: space-between;
   }
-  
+
   .stat-icon {
     width: 60px;
     height: 60px;
@@ -346,38 +366,38 @@ onMounted(() => {
     justify-content: center;
     font-size: 24px;
     color: white;
-    
+
     &.total {
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     }
-    
+
     &.providers {
       background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
     }
-    
+
     &.recent {
       background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
     }
-    
+
     &.growth {
       background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
     }
   }
-  
+
   .stat-info {
     text-align: right;
-    
+
     .stat-value {
       font-size: 28px;
       font-weight: bold;
       color: #303133;
       line-height: 1;
-      
+
       &.growth-value {
         color: #67c23a;
       }
     }
-    
+
     .stat-label {
       font-size: 14px;
       color: #909399;
@@ -388,7 +408,7 @@ onMounted(() => {
 
 .chart-container {
   height: 400px;
-  
+
   .chart {
     width: 100%;
     height: 100%;
@@ -401,7 +421,7 @@ onMounted(() => {
   background: #e4e7ed;
   border-radius: 3px;
   overflow: hidden;
-  
+
   .progress-fill {
     height: 100%;
     border-radius: 3px;
@@ -412,7 +432,7 @@ onMounted(() => {
 .el-card {
   border: none;
   box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.06);
-  
+
   :deep(.el-card__header) {
     border-bottom: 1px solid #e4e7ed;
     background: #fafbfc;

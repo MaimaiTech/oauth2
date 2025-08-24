@@ -1,94 +1,9 @@
- <template>
-  <div class="oauth-callback-container" role="main" aria-live="polite">
-    <el-card class="callback-card" shadow="hover">
-      <!-- Loading State -->
-      <div v-if="callbackState.loading" class="callback-content">
-        <div class="callback-icon" role="img" aria-label="正在处理">
-          <el-icon class="rotating-icon" :size="48">
-            <Loading />
-          </el-icon>
-        </div>
-        <h2 class="callback-title">{{ $t('oauth2.callback.processing') }}</h2>
-        <p class="callback-description">
-          {{ $t('oauth2.common.loading') }}
-        </p>
-        <el-progress
-          :percentage="progressState.value"
-          :show-text="false"
-          class="progress-bar"
-          :aria-label="`处理进度 ${Math.round(progressState.value)}%`"
-        />
-        <div class="sr-only" aria-live="polite">
-          {{ progressAriaLabel }}
-        </div>
-      </div>
-
-      <!-- Success State -->
-      <div v-else-if="callbackState.success" class="callback-content success">
-        <div class="callback-icon" role="img" aria-label="成功">
-          <el-icon :size="48" color="#67C23A">
-            <SuccessFilled />
-          </el-icon>
-        </div>
-        <h2 class="callback-title">{{ $t('oauth2.callback.success') }}</h2>
-        <p class="callback-description">
-          {{ successMessage }}
-        </p>
-        <div class="callback-actions">
-          <el-button
-            type="primary"
-            @click="redirectToTarget"
-            :aria-label="`即将跳转到${redirectTarget}`"
-          >
-            {{ $t('oauth2.callback.redirecting') }}
-          </el-button>
-        </div>
-        <div v-if="autoRedirectCountdown > 0" class="auto-redirect-info">
-          {{ autoRedirectCountdown }}秒后自动跳转
-        </div>
-      </div>
-
-      <!-- Error State -->
-      <div v-else-if="callbackState.error" class="callback-content error">
-        <div class="callback-icon" role="img" aria-label="错误">
-          <el-icon :size="48" color="#F56C6C">
-            <CircleCloseFilled />
-          </el-icon>
-        </div>
-        <h2 class="callback-title">{{ $t('oauth2.callback.error') }}</h2>
-        <p class="callback-description">
-          {{ errorMessage }}
-        </p>
-        <div class="error-details" v-if="errorDetails">
-          <el-collapse>
-            <el-collapse-item title="错误详情" name="details">
-              <pre class="error-code">{{ errorDetails }}</pre>
-            </el-collapse-item>
-          </el-collapse>
-        </div>
-        <div class="callback-actions">
-          <el-button @click="goBack">
-            {{ $t('oauth2.common.back') }}
-          </el-button>
-          <el-button
-            type="primary"
-            @click="retryCallback"
-            :loading="retryState.loading"
-          >
-            {{ $t('oauth2.common.retry') }}
-          </el-button>
-        </div>
-      </div>
-    </el-card>
-  </div>
-</template>
-
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { ElMessage } from 'element-plus'
-import { Loading, SuccessFilled, CircleCloseFilled } from '@element-plus/icons-vue'
+import { CircleCloseFilled, Loading, SuccessFilled } from '@element-plus/icons-vue'
 import { handleOAuthCallback } from '../../api/userOAuthApi'
 import type { OAuthCallbackResponse, OAuthProviderName } from '../../api/types'
 
@@ -129,18 +44,18 @@ const { t } = useI18n()
 const callbackState = ref<CallbackState>({
   loading: true,
   success: false,
-  error: false
+  error: false,
 })
 
 const progressState = ref<ProgressState>({
   value: 0,
-  phase: 'validating'
+  phase: 'validating',
 })
 
 const retryState = ref<RetryState>({
   loading: false,
   attempts: 0,
-  maxAttempts: 3
+  maxAttempts: 3,
 })
 
 const redirectTarget = ref<string>('/personal/oauth-bindings')
@@ -173,46 +88,50 @@ const progressAriaLabel = computed((): string => {
     validating: '验证参数',
     exchanging: '交换令牌',
     processing: '处理用户信息',
-    completing: '完成绑定'
+    completing: '完成绑定',
   }
   return `${phaseTexts[phase]}: ${Math.round(progressState.value.value)}%`
 })
 
 // Enhanced error handling with categorized errors
-const getErrorTranslation = (errorCode: string): string => {
+function getErrorTranslation(errorCode: string): string {
   const errorMap: Record<string, string> = {
-    'missing_provider': t('oauth2.callback.errors.missingProvider') || '缺少服务商参数',
-    'unsupported_provider': t('oauth2.callback.errors.unsupportedProvider') || '不支持的服务商',
-    'invalid_state': t('oauth2.callback.errors.invalidState'),
-    'missing_code': t('oauth2.callback.errors.missingCode'),
-    'exchange_failed': t('oauth2.callback.errors.exchangeFailed'),
-    'user_info_failed': t('oauth2.callback.errors.userInfoFailed'),
-    'binding_failed': t('oauth2.callback.errors.bindingFailed'),
-    'network_error': t('oauth2.callback.errors.networkError'),
-    'timeout_error': t('oauth2.callback.errors.timeoutError'),
-    'validation_error': t('oauth2.callback.errors.validationError')
+    missing_provider: t('oauth2.callback.errors.missingProvider') || '缺少服务商参数',
+    unsupported_provider: t('oauth2.callback.errors.unsupportedProvider') || '不支持的服务商',
+    invalid_state: t('oauth2.callback.errors.invalidState'),
+    missing_code: t('oauth2.callback.errors.missingCode'),
+    exchange_failed: t('oauth2.callback.errors.exchangeFailed'),
+    user_info_failed: t('oauth2.callback.errors.userInfoFailed'),
+    binding_failed: t('oauth2.callback.errors.bindingFailed'),
+    network_error: t('oauth2.callback.errors.networkError'),
+    timeout_error: t('oauth2.callback.errors.timeoutError'),
+    validation_error: t('oauth2.callback.errors.validationError'),
   }
 
   return errorMap[errorCode] || errorCode
 }
 
 // Enhanced progress simulation with phases
-const simulateProgress = (): number => {
+function simulateProgress(): number {
   progressTimer = window.setInterval(() => {
     if (progressState.value.value < 90) {
       // Different progress speeds for different phases
-      const increment = progressState.value.phase === 'validating' ? 25 :
-                       progressState.value.phase === 'exchanging' ? 15 :
-                       progressState.value.phase === 'processing' ? 10 : 5
+      const increment = progressState.value.phase === 'validating'
+        ? 25
+        : progressState.value.phase === 'exchanging'
+          ? 15
+          : progressState.value.phase === 'processing' ? 10 : 5
 
       progressState.value.value = Math.min(90, progressState.value.value + Math.random() * increment)
 
       // Update phase based on progress
       if (progressState.value.value > 20 && progressState.value.phase === 'validating') {
         progressState.value.phase = 'exchanging'
-      } else if (progressState.value.value > 50 && progressState.value.phase === 'exchanging') {
+      }
+      else if (progressState.value.value > 50 && progressState.value.phase === 'exchanging') {
         progressState.value.phase = 'processing'
-      } else if (progressState.value.value > 80 && progressState.value.phase === 'processing') {
+      }
+      else if (progressState.value.value > 80 && progressState.value.phase === 'processing') {
         progressState.value.phase = 'completing'
       }
     }
@@ -222,7 +141,7 @@ const simulateProgress = (): number => {
 }
 
 // Enhanced parameter validation
-const validateCallbackParams = (): { isValid: boolean; error?: string; params?: CallbackParams } => {
+function validateCallbackParams(): { isValid: boolean, error?: string, params?: CallbackParams } {
   const { code, state, error, error_description } = route.query
   const provider = route.params.provider as string
 
@@ -230,7 +149,7 @@ const validateCallbackParams = (): { isValid: boolean; error?: string; params?: 
   if (!provider) {
     return {
       isValid: false,
-      error: 'missing_provider'
+      error: 'missing_provider',
     }
   }
 
@@ -239,7 +158,7 @@ const validateCallbackParams = (): { isValid: boolean; error?: string; params?: 
   if (!supportedProviders.includes(provider as OAuthProviderName)) {
     return {
       isValid: false,
-      error: 'unsupported_provider'
+      error: 'unsupported_provider',
     }
   }
 
@@ -247,7 +166,7 @@ const validateCallbackParams = (): { isValid: boolean; error?: string; params?: 
   if (error) {
     return {
       isValid: false,
-      error: (error_description as string) || (error as string) || 'oauth_error'
+      error: (error_description as string) || (error as string) || 'oauth_error',
     }
   }
 
@@ -255,14 +174,14 @@ const validateCallbackParams = (): { isValid: boolean; error?: string; params?: 
   if (!code) {
     return {
       isValid: false,
-      error: 'missing_code'
+      error: 'missing_code',
     }
   }
 
   if (!state) {
     return {
       isValid: false,
-      error: 'invalid_state'
+      error: 'invalid_state',
     }
   }
 
@@ -270,14 +189,14 @@ const validateCallbackParams = (): { isValid: boolean; error?: string; params?: 
   if (typeof code !== 'string' || code.length < 10) {
     return {
       isValid: false,
-      error: 'validation_error'
+      error: 'validation_error',
     }
   }
 
   if (typeof state !== 'string' || state.length < 10) {
     return {
       isValid: false,
-      error: 'validation_error'
+      error: 'validation_error',
     }
   }
 
@@ -288,13 +207,13 @@ const validateCallbackParams = (): { isValid: boolean; error?: string; params?: 
       code: code as string,
       state: state as string,
       ...(error && { error: error as string }),
-      ...(error_description && { error_description: error_description as string })
-    }
+      ...(error_description && { error_description: error_description as string }),
+    },
   }
 }
 
 // Enhanced callback processing with timeout and retry logic
-const handleCallbackProcessing = async (): Promise<void> => {
+async function handleCallbackProcessing(): Promise<void> {
   const progressTimerId = simulateProgress()
 
   try {
@@ -313,7 +232,7 @@ const handleCallbackProcessing = async (): Promise<void> => {
 
     const response = await Promise.race([
       handleOAuthCallback(validation.params!.provider, validation.params!.code, validation.params!.state),
-      timeoutPromise
+      timeoutPromise,
     ])
 
     // Phase 3: Complete progress
@@ -331,7 +250,7 @@ const handleCallbackProcessing = async (): Promise<void> => {
       loading: false,
       success: true,
       error: false,
-      data: response.data
+      data: response.data,
     }
 
     // Set redirect target
@@ -344,8 +263,8 @@ const handleCallbackProcessing = async (): Promise<void> => {
 
     // Start auto-redirect countdown
     startAutoRedirect()
-
-  } catch (error: any) {
+  }
+  catch (error: any) {
     if (progressTimerId) {
       clearInterval(progressTimerId)
     }
@@ -362,23 +281,25 @@ const handleCallbackProcessing = async (): Promise<void> => {
       loading: false,
       success: false,
       error: true,
-      errorDetails: errorCode
+      errorDetails: errorCode,
     }
 
     // Set detailed error info for debugging
-    errorDetails.value = import.meta.env.DEV ? JSON.stringify({
-      message: error.message,
-      stack: error.stack,
-      timestamp: new Date().toISOString(),
-      url: window.location.href
-    }, null, 2) : ''
+    errorDetails.value = import.meta.env.DEV
+      ? JSON.stringify({
+          message: error.message,
+          stack: error.stack,
+          timestamp: new Date().toISOString(),
+          url: window.location.href,
+        }, null, 2)
+      : ''
 
     ElMessage.error(errorMessage.value)
   }
 }
 
 // Auto-redirect functionality
-const startAutoRedirect = (): void => {
+function startAutoRedirect(): void {
   autoRedirectCountdown.value = 5
   countdownTimer = window.setInterval(() => {
     autoRedirectCountdown.value--
@@ -391,7 +312,7 @@ const startAutoRedirect = (): void => {
   }, 1000)
 }
 
-const redirectToTarget = (): void => {
+function redirectToTarget(): void {
   // Clear any existing timers
   if (countdownTimer) {
     clearInterval(countdownTimer)
@@ -400,17 +321,19 @@ const redirectToTarget = (): void => {
 
   try {
     router.push(redirectTarget.value)
-  } catch (error) {
+  }
+  catch (error) {
     console.error('Navigation failed:', error)
     // Fallback to page refresh
     window.location.href = redirectTarget.value
   }
 }
 
-const goBack = (): void => {
+function goBack(): void {
   try {
     router.back()
-  } catch (error) {
+  }
+  catch (error) {
     console.error('Navigation back failed:', error)
     // Fallback to home page
     router.push('/')
@@ -418,7 +341,7 @@ const goBack = (): void => {
 }
 
 // Enhanced retry with exponential backoff
-const retryCallback = async (): Promise<void> => {
+async function retryCallback(): Promise<void> {
   if (retryState.value.attempts >= retryState.value.maxAttempts) {
     ElMessage.error('已达到最大重试次数，请刷新页面重试')
     return
@@ -432,29 +355,31 @@ const retryCallback = async (): Promise<void> => {
     callbackState.value = {
       loading: true,
       success: false,
-      error: false
+      error: false,
     }
     progressState.value = {
       value: 0,
-      phase: 'validating'
+      phase: 'validating',
     }
     errorDetails.value = ''
 
     // Add delay for exponential backoff
-    const delay = Math.pow(2, retryState.value.attempts - 1) * 1000
+    const delay = 2 ** (retryState.value.attempts - 1) * 1000
     await new Promise(resolve => setTimeout(resolve, delay))
 
     await nextTick()
     await handleCallbackProcessing()
-  } catch (error) {
+  }
+  catch (error) {
     console.error('Retry failed:', error)
-  } finally {
+  }
+  finally {
     retryState.value.loading = false
   }
 }
 
 // Cleanup function
-const cleanup = (): void => {
+function cleanup(): void {
   if (progressTimer) {
     clearInterval(progressTimer)
     progressTimer = null
@@ -475,7 +400,8 @@ onMounted(() => {
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) {
       cleanup()
-    } else if (callbackState.value.loading) {
+    }
+    else if (callbackState.value.loading) {
       // Restart processing if page becomes visible and still loading
       handleCallbackProcessing()
     }
@@ -484,14 +410,14 @@ onMounted(() => {
   // Start processing immediately
   handleCallbackProcessing()
 
-  const urlObj = new URL(window.location.href);
-  const code = urlObj.searchParams.get("code") || urlObj.searchParams.get("authCode");
-  const state = urlObj.searchParams.get("state");
-  const hashPath = urlObj.hash.split("?")[0]; // 原始 Hash 路径
+  const urlObj = new URL(window.location.href)
+  const code = urlObj.searchParams.get('code') || urlObj.searchParams.get('authCode')
+  const state = urlObj.searchParams.get('state')
+  const hashPath = urlObj.hash.split('?')[0] // 原始 Hash 路径
 
   if (code && state) {
-    const fixedUrl = `${urlObj.origin}${hashPath}?code=${code}&state=${state}`;
-    window.location.href = fixedUrl;
+    const fixedUrl = `${urlObj.origin}${hashPath}?code=${code}&state=${state}`
+    window.location.href = fixedUrl
   }
 })
 
@@ -502,6 +428,97 @@ onUnmounted(() => {
 // Handle page refresh/close
 window.addEventListener('beforeunload', cleanup)
 </script>
+
+<template>
+  <div class="oauth-callback-container" role="main" aria-live="polite">
+    <el-card class="callback-card" shadow="hover">
+      <!-- Loading State -->
+      <div v-if="callbackState.loading" class="callback-content">
+        <div class="callback-icon" role="img" aria-label="正在处理">
+          <el-icon class="rotating-icon" :size="48">
+            <Loading />
+          </el-icon>
+        </div>
+        <h2 class="callback-title">
+          {{ $t('oauth2.callback.processing') }}
+        </h2>
+        <p class="callback-description">
+          {{ $t('oauth2.common.loading') }}
+        </p>
+        <el-progress
+          :percentage="progressState.value"
+          :show-text="false"
+          class="progress-bar"
+          :aria-label="`处理进度 ${Math.round(progressState.value)}%`"
+        />
+        <div class="sr-only" aria-live="polite">
+          {{ progressAriaLabel }}
+        </div>
+      </div>
+
+      <!-- Success State -->
+      <div v-else-if="callbackState.success" class="callback-content success">
+        <div class="callback-icon" role="img" aria-label="成功">
+          <el-icon :size="48" color="#67C23A">
+            <SuccessFilled />
+          </el-icon>
+        </div>
+        <h2 class="callback-title">
+          {{ $t('oauth2.callback.success') }}
+        </h2>
+        <p class="callback-description">
+          {{ successMessage }}
+        </p>
+        <div class="callback-actions">
+          <el-button
+            type="primary"
+            :aria-label="`即将跳转到${redirectTarget}`"
+            @click="redirectToTarget"
+          >
+            {{ $t('oauth2.callback.redirecting') }}
+          </el-button>
+        </div>
+        <div v-if="autoRedirectCountdown > 0" class="auto-redirect-info">
+          {{ autoRedirectCountdown }}秒后自动跳转
+        </div>
+      </div>
+
+      <!-- Error State -->
+      <div v-else-if="callbackState.error" class="callback-content error">
+        <div class="callback-icon" role="img" aria-label="错误">
+          <el-icon :size="48" color="#F56C6C">
+            <CircleCloseFilled />
+          </el-icon>
+        </div>
+        <h2 class="callback-title">
+          {{ $t('oauth2.callback.error') }}
+        </h2>
+        <p class="callback-description">
+          {{ errorMessage }}
+        </p>
+        <div v-if="errorDetails" class="error-details">
+          <el-collapse>
+            <el-collapse-item title="错误详情" name="details">
+              <pre class="error-code">{{ errorDetails }}</pre>
+            </el-collapse-item>
+          </el-collapse>
+        </div>
+        <div class="callback-actions">
+          <el-button @click="goBack">
+            {{ $t('oauth2.common.back') }}
+          </el-button>
+          <el-button
+            type="primary"
+            :loading="retryState.loading"
+            @click="retryCallback"
+          >
+            {{ $t('oauth2.common.retry') }}
+          </el-button>
+        </div>
+      </div>
+    </el-card>
+  </div>
+</template>
 
 <style lang="scss" scoped>
 .oauth-callback-container {

@@ -1,6 +1,6 @@
 /**
  * User Components Index
- * 
+ *
  * Exports all user-facing OAuth components for easy importing
  */
 

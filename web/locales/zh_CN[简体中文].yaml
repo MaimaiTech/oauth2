@@ -4,7 +4,7 @@ oauth2:
     bindings: "用户绑定"
     statistics: "统计数据"
     personalBindings: "第三方账号"
-  
+
   providers:
     title: "OAuth 提供者管理"
     create: "新增提供者"
@@ -15,7 +15,7 @@ oauth2:
     testConnection: "测试连接"
     search: "搜索提供者"
     refresh: "刷新"
-    
+
     form:
       name: "提供者名称"
       displayName: "显示名称"
@@ -26,7 +26,7 @@ oauth2:
       status: "状态"
       sort: "排序"
       description: "描述"
-      
+
       placeholders:
         name: "选择 OAuth 提供者"
         displayName: "输入显示名称"
@@ -35,7 +35,7 @@ oauth2:
         redirectUri: "输入重定向 URI"
         scopes: "输入所需的授权范围"
         description: "输入描述信息"
-        
+
       validation:
         nameRequired: "提供者名称必填"
         displayNameRequired: "显示名称必填"
@@ -43,7 +43,7 @@ oauth2:
         clientSecretRequired: "客户端密钥必填"
         redirectUriRequired: "重定向 URI 必填"
         redirectUriInvalid: "请输入有效的 URL"
-        
+
     columns:
       id: "ID"
       name: "提供者"
@@ -52,18 +52,18 @@ oauth2:
       createdAt: "创建时间"
       updatedAt: "更新时间"
       actions: "操作"
-      
+
     status:
       enabled: "已启用"
       disabled: "已禁用"
-      
+
     actions:
       view: "查看"
       edit: "编辑"
       delete: "删除"
       enable: "启用"
       disable: "禁用"
-      
+
     messages:
       createSuccess: "提供者创建成功"
       updateSuccess: "提供者更新成功"
@@ -73,68 +73,111 @@ oauth2:
       testConnectionSuccess: "连接测试成功"
       testConnectionFailed: "连接测试失败"
       deleteConfirm: "确定要删除此提供者吗？"
-      
-  bindings:
-    title: "用户 OAuth 绑定"
-    search: "搜索用户"
-    refresh: "刷新"
+
+bindings:
+  title: "用户 OAuth 绑定管理"
+  refresh: "刷新"
+  unbind: "解绑"
+  batchActions: "批量操作"
+
+  columns:
+    id: "ID"
+    userId: "用户 ID"
+    userInfo: "用户信息"
+    username: "用户名"
+    provider: "OAuth提供者"
+    providerUser: "第三方用户"
+    providerUserId: "第三方用户 ID"
+    providerEmail: "第三方邮箱"
+    email: "邮箱"
+    nickname: "昵称"
+    avatar: "头像"
+    status: "状态"
+    tokenStatus: "令牌状态"
+    bindTime: "绑定时间"
+    lastLogin: "最后登录"
+    createdAt: "绑定时间"
+    actions: "操作"
+
+  search:
+    provider: "提供者"
+    status: "状态"
+    userId: "用户ID"
+    userIdPlaceholder: "输入用户ID"
+    username: "用户名"
+    usernamePlaceholder: "搜索用户名"
+    providerUsername: "第三方用户名"
+    providerUsernamePlaceholder: "搜索第三方用户名"
+    dateRange: "绑定时间"
+
+  actions:
+    view: "查看详情"
     unbind: "解绑"
-    
-    columns:
-      id: "ID"
-      userId: "用户 ID"
-      username: "用户名"
-      provider: "提供者"
-      providerUserId: "第三方用户 ID"
-      email: "邮箱"
-      nickname: "昵称"
-      avatar: "头像"
-      bindTime: "绑定时间"
-      lastLogin: "最后登录"
-      actions: "操作"
-      
-    actions:
-      view: "查看详情"
-      unbind: "解绑账号"
-      
-    messages:
-      unbindSuccess: "账号解绑成功"
-      unbindConfirm: "确定要解绑此 OAuth 账号吗？"
-      
-    filters:
-      provider: "按提供者筛选"
-      status: "按状态筛选"
-      all: "全部"
-      
+    batchUnbind: "批量解绑"
+    batchDisable: "批量禁用"
+
+  success:
+    unbind: "强制解绑成功"
+    batchUnbind: "批量解绑成功"
+    batchDisable: "批量禁用成功"
+
+  error:
+    unbind: "解绑失败"
+    batchUnbind: "批量解绑失败"
+    batchDisable: "批量禁用失败"
+
+  confirm:
+    forceUnbind: "确定要强制解绑这个OAuth账号吗？解绑后用户将无法通过此第三方账号登录。"
+    batchUnbind: "确定要批量解绑选中的 {count} 个OAuth账号吗？"
+    batchDisable: "确定要批量禁用选中的 {count} 个OAuth账号吗？"
+
+  warning:
+    noSelection: "请选择要操作的OAuth账号"
+
+  export:
+    button: "导出数据"
+    preparing: "正在准备导出数据..."
+    inProgress: "导出正在进行中..."
+    success: "导出成功"
+    failed: "导出失败"
+
+  empty:
+    description: "暂无OAuth绑定记录"
+
+  filters:
+    provider: "按提供者筛选"
+    status: "按状态筛选"
+    all: "全部"
+
   statistics:
     title: "OAuth 统计"
     overview: "概览"
     trends: "趋势"
-    
+
     cards:
       totalUsers: "OAuth 用户总数"
       activeUsers: "活跃用户"
       newUsers: "今日新增用户"
       totalProviders: "提供者总数"
-      
+
     charts:
       userGrowth: "用户增长趋势"
       providerDistribution: "提供者分布"
       dailyLogins: "每日 OAuth 登录"
-      
+
     periods:
       today: "今天"
       week: "本周"
       month: "本月"
       year: "今年"
-      
+
   personal:
     title: "我的第三方账号"
     subtitle: "管理您绑定的第三方账号"
     noAccounts: "暂无绑定的第三方账号"
     bindAccount: "绑定账号"
     unbindAccount: "解绑账号"
-    
+
     account:
       provider: "提供者"
       nickname: "昵称"
@@ -142,24 +185,24 @@ oauth2:
       bindTime: "绑定时间"
       lastLogin: "最后登录"
       status: "状态"
-      
+
     status:
       active: "活跃"
       inactive: "未活跃"
-      
+
     actions:
       bind: "绑定 {provider}"
       unbind: "解绑 {provider}"
       login: "{provider} 登录"
       connect: "连接 {provider}"
-      
+
     messages:
       bindSuccess: "账号绑定成功"
       unbindSuccess: "账号解绑成功"
       bindFailed: "绑定账号失败"
       unbindFailed: "解绑账号失败"
       unbindConfirm: "确定要解绑您的 {provider} 账号吗？"
-      
+
   providerInfo:
     dingtalk:
       name: "钉钉"
@@ -179,14 +222,14 @@ oauth2:
     qq:
       name: "QQ"
       description: "即时通讯服务"
-      
+
   callback:
     title: "OAuth 回调处理"
     processing: "正在处理 OAuth 回调..."
     success: "OAuth 认证成功"
     error: "OAuth 认证失败"
     redirecting: "正在跳转..."
-    
+
     errors:
       missingProvider: "缺少 OAuth 服务商参数"
       unsupportedProvider: "不支持的 OAuth 服务商"
@@ -198,35 +241,46 @@ oauth2:
       networkError: "网络连接错误"
       timeoutError: "请求超时"
       validationError: "参数验证失败"
-      
-  common:
-    loading: "加载中..."
-    noData: "暂无数据"
-    refresh: "刷新"
-    search: "搜索"
-    reset: "重置"
-    cancel: "取消"
-    confirm: "确认"
-    save: "保存"
-    delete: "删除"
-    edit: "编辑"
-    view: "查看"
-    enable: "启用"
-    disable: "禁用"
-    back: "返回"
-    next: "下一页"
-    previous: "上一页"
-    submit: "提交"
-    close: "关闭"
-    retry: "重试"
-    
-    pagination:
-      total: "共 {total} 条记录"
-      page: "页"
-      pageSize: "每页显示条数"
-      
-    validation:
-      required: "此字段必填"
-      invalid: "格式无效"
-      tooLong: "内容过长"
-      tooShort: "内容过短"
+
+common:
+  loading: "加载中..."
+  noData: "暂无数据"
+  refresh: "刷新"
+  refreshSuccess: "数据已刷新"
+  search: "搜索"
+  reset: "重置"
+  cancel: "取消"
+  confirm: "确认"
+  save: "保存"
+  delete: "删除"
+  edit: "编辑"
+  view: "查看"
+  enable: "启用"
+  disable: "禁用"
+  back: "返回"
+  next: "下一页"
+  previous: "上一页"
+  submit: "提交"
+  close: "关闭"
+  retry: "重试"
+  all: "全部"
+  normal: "正常"
+  disabled: "禁用"
+  pending: "待激活"
+  actions: "操作"
+  to: "至"
+  startDate: "开始日期"
+  endDate: "结束日期"
+  collapse: "收起"
+  expand: "展开"
+
+  pagination:
+    total: "共 {total} 条记录"
+    page: "页"
+    pageSize: "每页显示条数"
+
+  validation:
+    required: "此字段必填"
+    invalid: "格式无效"
+    tooLong: "内容过长"
+    tooShort: "内容过短"

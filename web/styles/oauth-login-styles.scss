@@ -1,0 +1,420 @@
+/**
+ * OAuth Login Panel - Main Styles
+ * Modern design with glassmorphism, animations, and responsive layout
+ */
+
+// CSS Custom Properties for theming
+:root {
+  // Brand colors for OAuth providers
+  --oauth-github: #333333;
+  --oauth-gitee: #C71C27;
+  --oauth-google: #4285F4;
+  --oauth-wechat: #07C160;
+  --oauth-qq: #12B7F5;
+  --oauth-dingtalk: #0089FF;
+  --oauth-feishu: #00D4AA;
+  
+  // Glassmorphism properties
+  --glass-bg: rgba(255, 255, 255, 0.1);
+  --glass-border: rgba(255, 255, 255, 0.2);
+  --glass-backdrop: blur(10px);
+  
+  // Animations
+  --oauth-transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  --oauth-hover-scale: 1.02;
+  --oauth-active-scale: 0.98;
+  
+  // Shadows
+  --oauth-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --oauth-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --oauth-shadow-glow: 0 0 20px rgba(66, 133, 244, 0.3);
+}
+
+// Dark theme adjustments
+@media (prefers-color-scheme: dark) {
+  :root {
+    --glass-bg: rgba(0, 0, 0, 0.2);
+    --glass-border: rgba(255, 255, 255, 0.1);
+    --oauth-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
+    --oauth-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.3);
+  }
+}
+
+// Enhanced OAuth Login Panel
+.oauth-login-panel {
+  width: 100%;
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-backdrop);
+  border: 1px solid var(--glass-border);
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: var(--oauth-shadow-lg);
+  transition: var(--oauth-transition);
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--oauth-shadow-glow);
+  }
+  
+  // Header with gradient text
+  &__header {
+    text-align: center;
+    margin-bottom: 32px;
+    position: relative;
+    
+    &::after {
+      content: '';
+      position: absolute;
+      bottom: -16px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 60px;
+      height: 2px;
+      background: linear-gradient(90deg, var(--el-color-primary), var(--el-color-success));
+      border-radius: 1px;
+      animation: fadeInUp 0.6s ease-out 0.2s both;
+    }
+  }
+  
+  &__title {
+    font-size: 24px;
+    font-weight: 700;
+    background: linear-gradient(135deg, var(--el-text-color-primary) 0%, var(--el-color-primary) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin: 0 0 12px 0;
+    animation: fadeInUp 0.6s ease-out both;
+  }
+  
+  &__subtitle {
+    font-size: 16px;
+    color: var(--el-text-color-regular);
+    margin: 0;
+    opacity: 0.8;
+    animation: fadeInUp 0.6s ease-out 0.1s both;
+  }
+  
+  // Grid with responsive layout
+  &__grid {
+    display: grid;
+    gap: 16px;
+    width: 100%;
+    animation: fadeInUp 0.6s ease-out 0.3s both;
+    
+    // Responsive grid
+    @media (max-width: 480px) {
+      grid-template-columns: 1fr !important;
+      gap: 12px;
+    }
+    
+    @media (max-width: 768px) {
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)) !important;
+    }
+  }
+  
+  // Enhanced button items
+  &__item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    padding: 8px;
+    border-radius: 12px;
+    transition: var(--oauth-transition);
+    position: relative;
+    overflow: hidden;
+    
+    &::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+      transition: left 0.5s ease;
+    }
+    
+    &:hover {
+      transform: translateY(-4px);
+      
+      &::before {
+        left: 100%;
+      }
+    }
+  }
+  
+  // Enhanced button styles
+  &__button {
+    width: 100%;
+    position: relative;
+    overflow: hidden;
+    border-radius: 12px;
+    transition: var(--oauth-transition);
+    
+    &:hover {
+      transform: scale(var(--oauth-hover-scale));
+    }
+    
+    &:active {
+      transform: scale(var(--oauth-active-scale));
+    }
+    
+    // Ripple effect
+    &::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 0;
+      height: 0;
+      background: rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      transition: width 0.4s ease, height 0.4s ease;
+    }
+    
+    &:active::after {
+      width: 300px;
+      height: 300px;
+    }
+  }
+  
+  // Loading states with skeleton animation
+  &__loading {
+    animation: fadeInUp 0.4s ease-out both;
+  }
+  
+  &__skeleton {
+    background: var(--glass-bg);
+    border-radius: 12px;
+    overflow: hidden;
+    position: relative;
+    
+    &::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+      animation: shimmer 1.5s infinite;
+    }
+    
+    &-button {
+      padding: 16px;
+      border-radius: 12px;
+      background: var(--el-fill-color-lighter);
+    }
+  }
+  
+  // Error and empty states
+  &__error,
+  &__empty {
+    padding: 48px 24px;
+    text-align: center;
+    
+    .el-empty {
+      .el-empty__image {
+        margin-bottom: 24px;
+      }
+    }
+  }
+  
+  &__error {
+    animation: shake 0.5s ease-in-out;
+    
+    .el-button {
+      margin-top: 16px;
+      animation: pulse 2s infinite;
+    }
+  }
+  
+  &__empty {
+    opacity: 0.8;
+    
+    .el-empty__description {
+      color: var(--el-text-color-secondary);
+    }
+  }
+}
+
+// Provider-specific enhancements
+.oauth-provider-button {
+  position: relative;
+  overflow: hidden;
+  
+  // Enhanced hover effects per provider
+  &.oauth-provider-github {
+    &:hover {
+      box-shadow: 0 8px 25px rgba(51, 51, 51, 0.3);
+      background: linear-gradient(135deg, #333333 0%, #555555 100%) !important;
+    }
+  }
+  
+  &.oauth-provider-gitee {
+    &:hover {
+      box-shadow: 0 8px 25px rgba(199, 28, 39, 0.3);
+      background: linear-gradient(135deg, #C71C27 0%, #E73C4E 100%) !important;
+    }
+  }
+  
+  &.oauth-provider-google {
+    &:hover {
+      box-shadow: 0 8px 25px rgba(66, 133, 244, 0.3);
+      background: linear-gradient(135deg, #4285F4 0%, #5A9DFF 100%) !important;
+    }
+  }
+  
+  &.oauth-provider-wechat {
+    &:hover {
+      box-shadow: 0 8px 25px rgba(7, 193, 96, 0.3);
+      background: linear-gradient(135deg, #07C160 0%, #1ACD73 100%) !important;
+    }
+  }
+  
+  &.oauth-provider-qq {
+    &:hover {
+      box-shadow: 0 8px 25px rgba(18, 183, 245, 0.3);
+      background: linear-gradient(135deg, #12B7F5 0%, #2EC4FF 100%) !important;
+    }
+  }
+  
+  &.oauth-provider-dingtalk {
+    &:hover {
+      box-shadow: 0 8px 25px rgba(0, 137, 255, 0.3);
+      background: linear-gradient(135deg, #0089FF 0%, #1A9AFF 100%) !important;
+    }
+  }
+  
+  &.oauth-provider-feishu {
+    &:hover {
+      box-shadow: 0 8px 25px rgba(0, 212, 170, 0.3);
+      background: linear-gradient(135deg, #00D4AA 0%, #1ADDBB 100%) !important;
+    }
+  }
+  
+  // Glass variant for all providers
+  &--glass {
+    background: var(--glass-bg) !important;
+    backdrop-filter: var(--glass-backdrop);
+    border: 1px solid var(--glass-border);
+    
+    &:hover {
+      background: rgba(255, 255, 255, 0.15) !important;
+      transform: translateY(-2px) scale(1.02);
+    }
+  }
+}
+
+// Responsive design
+@media (max-width: 768px) {
+  .oauth-login-panel {
+    padding: 20px;
+    border-radius: 12px;
+    
+    &__header {
+      margin-bottom: 24px;
+    }
+    
+    &__title {
+      font-size: 20px;
+    }
+    
+    &__subtitle {
+      font-size: 14px;
+    }
+    
+    &__grid {
+      gap: 12px;
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .oauth-login-panel {
+    padding: 16px;
+    
+    &__header {
+      margin-bottom: 20px;
+    }
+    
+    &__title {
+      font-size: 18px;
+    }
+    
+    &__grid {
+      gap: 10px;
+    }
+  }
+}
+
+// Accessibility improvements
+@media (prefers-reduced-motion: reduce) {
+  .oauth-login-panel,
+  .oauth-login-panel *,
+  .oauth-provider-button {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+// High contrast mode support
+@media (prefers-contrast: high) {
+  .oauth-login-panel {
+    border: 2px solid var(--el-border-color);
+    background: var(--el-bg-color);
+    
+    &__title {
+      -webkit-text-fill-color: unset;
+      background: unset;
+      color: var(--el-text-color-primary);
+    }
+  }
+  
+  .oauth-provider-button {
+    border: 2px solid currentColor;
+  }
+}
+
+// Focus styles for accessibility
+.oauth-provider-button:focus-visible {
+  outline: 3px solid var(--el-color-primary);
+  outline-offset: 2px;
+  border-radius: 12px;
+}
+
+// Animation keyframes
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    left: -100%;
+  }
+  100% {
+    left: 100%;
+  }
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+  20%, 40%, 60%, 80% { transform: translateX(5px); }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}

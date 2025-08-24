@@ -1,109 +1,20 @@
-<template>
-  <div class="oauth-flow-handler">
-    <!-- Processing State -->
-    <div v-if="isProcessing" class="processing-state">
-      <div class="processing-content">
-        <el-icon class="processing-icon is-loading" :size="48">
-          <Loading />
-        </el-icon>
-        <h3 class="processing-title">正在处理 OAuth 授权...</h3>
-        <p class="processing-message">{{ processingMessage }}</p>
-        <div class="processing-steps">
-          <div class="step" :class="{ active: currentStep >= 1 }">
-            <el-icon><CircleCheckFilled /></el-icon>
-            <span>验证授权码</span>
-          </div>
-          <div class="step" :class="{ active: currentStep >= 2 }">
-            <el-icon><CircleCheckFilled /></el-icon>
-            <span>获取用户信息</span>
-          </div>
-          <div class="step" :class="{ active: currentStep >= 3 }">
-            <el-icon><CircleCheckFilled /></el-icon>
-            <span>绑定账号</span>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Success State -->
-    <div v-else-if="isSuccess" class="success-state">
-      <div class="success-content">
-        <el-icon class="success-icon" :size="64" color="#67c23a">
-          <CircleCheckFilled />
-        </el-icon>
-        <h3 class="success-title">OAuth 绑定成功！</h3>
-        <p class="success-message">{{ successMessage }}</p>
-        <div v-if="bindingResult" class="binding-info">
-          <el-card class="binding-result-card">
-            <div class="provider-info">
-              <div class="provider-avatar" :style="{ backgroundColor: providerColor }">
-                <el-icon :size="24">
-                  <component :is="providerIcon" />
-                </el-icon>
-              </div>
-              <div class="provider-details">
-                <h4>{{ providerName }}</h4>
-                <p>{{ bindingResult.provider_username }}</p>
-              </div>
-            </div>
-          </el-card>
-        </div>
-        <div class="success-actions">
-          <el-button type="primary" @click="handleContinue">
-            继续
-          </el-button>
-          <el-button @click="handleClose">
-            关闭
-          </el-button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Error State -->
-    <div v-else-if="isError" class="error-state">
-      <div class="error-content">
-        <el-icon class="error-icon" :size="64" color="#f56c6c">
-          <CircleCloseFilled />
-        </el-icon>
-        <h3 class="error-title">OAuth 绑定失败</h3>
-        <p class="error-message">{{ errorMessage }}</p>
-        <div v-if="errorDetails" class="error-details">
-          <el-collapse>
-            <el-collapse-item title="错误详情" name="details">
-              <pre class="error-stack">{{ errorDetails }}</pre>
-            </el-collapse-item>
-          </el-collapse>
-        </div>
-        <div class="error-actions">
-          <el-button type="primary" @click="handleRetry">
-            重试
-          </el-button>
-          <el-button @click="handleClose">
-            关闭
-          </el-button>
-        </div>
-      </div>
-    </div>
-  </div>
-</template>
-
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import {
-  Loading,
   CircleCheckFilled,
-  CircleCloseFilled
+  CircleCloseFilled,
+  Loading,
 } from '@element-plus/icons-vue'
 
 import type { OAuthProviderName } from '../../api/types'
 import {
-  handleOAuthCallback,
+  clearOAuthState,
   getProviderConfig,
-  validateOAuthState,
+  handleOAuthCallback,
   retrieveOAuthState,
-  clearOAuthState
+  validateOAuthState,
 } from '../../api/userOAuthApi'
 
 // Define props
@@ -119,8 +30,10 @@ interface Props {
 const props = withDefaults(defineProps<Props>(), {
   autoStart: true,
   successRedirect: '/personal/bindings',
-  errorRedirect: '/personal/bindings'
+  errorRedirect: '/personal/bindings',
 })
+
+const emit = defineEmits<Emits>()
 
 // Define emits
 interface Emits {
@@ -128,8 +41,6 @@ interface Emits {
   (e: 'error', error: string): void
   (e: 'complete'): void
 }
-
-const emit = defineEmits<Emits>()
 
 // Router and route
 const route = useRoute()
@@ -155,7 +66,7 @@ const errorDescription = computed(() => route.query.error_description as string)
 
 // Provider information
 const providerConfig = computed(() => {
-  if (!provider.value) return null
+  if (!provider.value) { return null }
   return getProviderConfig(provider.value)
 })
 
@@ -168,7 +79,7 @@ const providerIcon = computed(() => {
     gitee: 'IconGitee',
     feishu: 'IconFeishu',
     wechat: 'IconWechat',
-    qq: 'IconQQ'
+    qq: 'IconQQ',
   }
   return iconMap[provider.value] || 'IconOAuth'
 })
@@ -191,7 +102,7 @@ onUnmounted(() => {
 })
 
 // Start OAuth processing
-const startProcessing = async () => {
+async function startProcessing() {
   // Check for OAuth error first
   if (error.value) {
     handleOAuthError()
@@ -231,9 +142,9 @@ const startProcessing = async () => {
     // Step 3: Bind account
     currentStep.value = 3
     processingMessage.value = '正在绑定账号...'
-    
+
     const result = await handleOAuthCallback(provider.value, code.value, state.value)
-    
+
     if (processingTimeout) {
       clearTimeout(processingTimeout)
       processingTimeout = null
@@ -241,66 +152,69 @@ const startProcessing = async () => {
 
     if (result.data.success) {
       showSuccess(result.data)
-    } else {
+    }
+    else {
       showError('绑定失败', result.data.message)
     }
-  } catch (error: any) {
+  }
+  catch (error: any) {
     if (processingTimeout) {
       clearTimeout(processingTimeout)
       processingTimeout = null
     }
-    
+
     showError(
       '处理失败',
-      error.response?.data?.message || error.message || '未知错误'
+      error.response?.data?.message || error.message || '未知错误',
     )
-  } finally {
+  }
+  finally {
     // Clear OAuth state
     clearOAuthState(provider.value)
   }
 }
 
 // Handle OAuth error from provider
-const handleOAuthError = () => {
+function handleOAuthError() {
   const errorMessages: Record<string, string> = {
-    'access_denied': '用户取消了授权',
-    'invalid_request': '无效的授权请求',
-    'unsupported_response_type': '不支持的响应类型',
-    'invalid_scope': '无效的授权范围',
-    'server_error': '服务器错误',
-    'temporarily_unavailable': '服务暂时不可用'
+    access_denied: '用户取消了授权',
+    invalid_request: '无效的授权请求',
+    unsupported_response_type: '不支持的响应类型',
+    invalid_scope: '无效的授权范围',
+    server_error: '服务器错误',
+    temporarily_unavailable: '服务暂时不可用',
   }
 
   const message = errorMessages[error.value] || '授权失败'
   const details = errorDescription.value || `错误代码: ${error.value}`
-  
+
   showError(message, details)
 }
 
 // Show success state
-const showSuccess = (result: any) => {
+function showSuccess(result: any) {
   isProcessing.value = false
   isSuccess.value = true
   bindingResult.value = result.binding
   successMessage.value = result.message || `${providerName.value} 账号绑定成功`
-  
+
   emit('success', result)
   ElMessage.success(successMessage.value)
 }
 
 // Show error state
-const showError = (title: string, details?: string) => {
+function showError(title: string, details?: string) {
   isProcessing.value = false
   isError.value = true
   errorMessage.value = title
   errorDetails.value = details || ''
-  
+
   emit('error', title)
   ElMessage.error(title)
 }
 
 // Handle continue button
-const handleContinue = () => {
+function handleContinue() {
   emit('complete')
   if (props.successRedirect) {
     router.push(props.successRedirect)
@@ -308,17 +222,18 @@ const handleContinue = () => {
 }
 
 // Handle close button
-const handleClose = () => {
+function handleClose() {
   emit('complete')
   if (isError.value && props.errorRedirect) {
     router.push(props.errorRedirect)
-  } else if (props.successRedirect) {
+  }
+  else if (props.successRedirect) {
     router.push(props.successRedirect)
   }
 }
 
 // Handle retry button
-const handleRetry = () => {
+function handleRetry() {
   isError.value = false
   errorMessage.value = ''
   errorDetails.value = ''
@@ -326,6 +241,107 @@ const handleRetry = () => {
   startProcessing()
 }
 </script>
+
+<template>
+  <div class="oauth-flow-handler">
+    <!-- Processing State -->
+    <div v-if="isProcessing" class="processing-state">
+      <div class="processing-content">
+        <el-icon class="processing-icon is-loading" :size="48">
+          <Loading />
+        </el-icon>
+        <h3 class="processing-title">
+          正在处理 OAuth 授权...
+        </h3>
+        <p class="processing-message">
+          {{ processingMessage }}
+        </p>
+        <div class="processing-steps">
+          <div class="step" :class="{ active: currentStep >= 1 }">
+            <el-icon><CircleCheckFilled /></el-icon>
+            <span>验证授权码</span>
+          </div>
+          <div class="step" :class="{ active: currentStep >= 2 }">
+            <el-icon><CircleCheckFilled /></el-icon>
+            <span>获取用户信息</span>
+          </div>
+          <div class="step" :class="{ active: currentStep >= 3 }">
+            <el-icon><CircleCheckFilled /></el-icon>
+            <span>绑定账号</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Success State -->
+    <div v-else-if="isSuccess" class="success-state">
+      <div class="success-content">
+        <el-icon class="success-icon" :size="64" color="#67c23a">
+          <CircleCheckFilled />
+        </el-icon>
+        <h3 class="success-title">
+          OAuth 绑定成功！
+        </h3>
+        <p class="success-message">
+          {{ successMessage }}
+        </p>
+        <div v-if="bindingResult" class="binding-info">
+          <el-card class="binding-result-card">
+            <div class="provider-info">
+              <div class="provider-avatar" :style="{ backgroundColor: providerColor }">
+                <el-icon :size="24">
+                  <component :is="providerIcon" />
+                </el-icon>
+              </div>
+              <div class="provider-details">
+                <h4>{{ providerName }}</h4>
+                <p>{{ bindingResult.provider_username }}</p>
+              </div>
+            </div>
+          </el-card>
+        </div>
+        <div class="success-actions">
+          <el-button type="primary" @click="handleContinue">
+            继续
+          </el-button>
+          <el-button @click="handleClose">
+            关闭
+          </el-button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Error State -->
+    <div v-else-if="isError" class="error-state">
+      <div class="error-content">
+        <el-icon class="error-icon" :size="64" color="#f56c6c">
+          <CircleCloseFilled />
+        </el-icon>
+        <h3 class="error-title">
+          OAuth 绑定失败
+        </h3>
+        <p class="error-message">
+          {{ errorMessage }}
+        </p>
+        <div v-if="errorDetails" class="error-details">
+          <el-collapse>
+            <el-collapse-item title="错误详情" name="details">
+              <pre class="error-stack">{{ errorDetails }}</pre>
+            </el-collapse-item>
+          </el-collapse>
+        </div>
+        <div class="error-actions">
+          <el-button type="primary" @click="handleRetry">
+            重试
+          </el-button>
+          <el-button @click="handleClose">
+            关闭
+          </el-button>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
 
 <style lang="scss" scoped>
 .oauth-flow-handler {
@@ -427,7 +443,7 @@ const handleRetry = () => {
 
       .binding-result-card {
         border-radius: 12px;
-        
+
         .provider-info {
           display: flex;
           align-items: center;
@@ -577,7 +593,7 @@ const handleRetry = () => {
   .success-actions,
   .error-actions {
     flex-direction: column;
-    
+
     .el-button {
       width: 100%;
     }

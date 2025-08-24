@@ -7,9 +7,27 @@
 <script setup lang="tsx">
 import type { MaProTableExpose, MaProTableOptions, MaProTableSchema } from '@mineadmin/pro-table'
 import type { Ref } from 'vue'
-import { ref, computed, reactive, shallowRef } from 'vue'
+import { computed, reactive, ref, shallowRef } from 'vue'
 import type { UseDialogExpose } from '@/hooks/useDialog.ts'
 import type { OAuthProvider } from '../../api/types'
+
+// ==================== 导入依赖 ====================
+import {
+  deleteProvider,
+  deleteProviders,
+  getProviderBrandColor,
+  getProviderDisplayName,
+  getProviderOptions,
+  getProviders,
+  testProvider,
+  toggleProvider,
+} from '../../api/oauthApi'
+import ProviderForm from '../../components/ProviderForm.vue'
+import useDialog from '@/hooks/useDialog.ts'
+import { useMessage } from '@/hooks/useMessage.ts'
+import { ResultCode } from '@/utils/ResultCode.ts'
+import { ElLoading, ElMessageBox } from 'element-plus'
+import { Connection, Link, Plus } from '@element-plus/icons-vue'
 
 // ==================== 类型定义 ====================
 interface ProviderActionState {
@@ -17,24 +35,6 @@ interface ProviderActionState {
   testing: Set<number>
   deleting: Set<number>
 }
-
-// ==================== 导入依赖 ====================
-import {
-  getProviders,
-  deleteProvider,
-  deleteProviders,
-  toggleProvider,
-  testProvider,
-  getProviderOptions,
-  getProviderDisplayName,
-  getProviderBrandColor
-} from '../../api/oauthApi'
-import ProviderForm from '../../components/ProviderForm.vue'
-import useDialog from '@/hooks/useDialog.ts'
-import { useMessage } from '@/hooks/useMessage.ts'
-import { ResultCode } from '@/utils/ResultCode.ts'
-import { ElLoading, ElMessageBox } from 'element-plus'
-import { Link, Plus, Connection } from '@element-plus/icons-vue'
 
 defineOptions({ name: 'oauth2:provider:fixed' })
 
@@ -62,7 +62,7 @@ function debounce<T extends (...args: any[]) => any>(func: T, wait: number): T {
 }
 
 // 统一的错误处理器
-const handleError = (error: any, context: string): string => {
+function handleError(error: any, context: string): string {
   console.error(`${context} Error:`, error)
 
   if (error?.response?.status === 422) {
@@ -87,11 +87,12 @@ const handleError = (error: any, context: string): string => {
 }
 
 // 复制到剪贴板功能
-const copyToClipboard = async (text: string, label: string) => {
+async function copyToClipboard(text: string, label: string) {
   try {
     await navigator.clipboard.writeText(text)
     msg.success(`${label}已复制到剪贴板`)
-  } catch (err) {
+  }
+  catch (err) {
     console.error('复制失败:', err)
     msg.error('复制失败，请手动复制')
   }
@@ -99,17 +100,19 @@ const copyToClipboard = async (text: string, label: string) => {
 
 // 防抖的切换状态函数
 const debouncedToggle = debounce(async (id: number, enabled: boolean) => {
-  if (actionStates.toggling.has(id)) return
+  if (actionStates.toggling.has(id)) { return }
 
   actionStates.toggling.add(id)
   try {
     await toggleProvider(id, enabled)
     msg.success(`${enabled ? '启用' : '禁用'}成功`)
     proTableRef.value.refresh()
-  } catch (error: any) {
+  }
+  catch (error: any) {
     msg.error(handleError(error, '状态切换'))
     proTableRef.value.refresh() // 刷新以恢复正确状态
-  } finally {
+  }
+  finally {
     actionStates.toggling.delete(id)
   }
 }, 300)
@@ -132,14 +135,14 @@ const getTableColumns = computed(() => [
     cellRender: ({ row }: { row: OAuthProvider }) => (
       <div class="flex items-center space-x-3">
         <div
-          class="w-8 h-8 rounded-lg flex items-center justify-center text-white text-sm font-bold shadow-sm"
+          class="h-8 w-8 flex items-center justify-center rounded-lg text-sm text-white font-bold shadow-sm"
           style={{ backgroundColor: getProviderBrandColor(row.name) }}
           title={getProviderDisplayName(row.name)}
         >
           {getProviderDisplayName(row.name).charAt(0)}
         </div>
         <div class="flex flex-col">
-          <span class="font-medium text-gray-900">{getProviderDisplayName(row.name)}</span>
+          <span class="text-gray-900 font-medium">{getProviderDisplayName(row.name)}</span>
           <span class="text-xs text-gray-500">{row.name}</span>
         </div>
       </div>
@@ -160,10 +163,11 @@ const getTableColumns = computed(() => [
       <div class="flex items-center space-x-2">
         <el-tooltip content="点击复制完整客户端ID" placement="top">
           <code
-            class="font-mono text-sm bg-gray-100 px-2 py-1 rounded cursor-pointer hover:bg-gray-200 transition-colors"
+            class="cursor-pointer rounded bg-gray-100 px-2 py-1 text-sm font-mono transition-colors hover:bg-gray-200"
             onClick={() => copyToClipboard(row.client_id, '客户端ID')}
           >
-            {row.client_id.substring(0, 16)}...
+            {row.client_id.substring(0, 16)}
+            ...
           </code>
         </el-tooltip>
         <el-button
@@ -183,7 +187,7 @@ const getTableColumns = computed(() => [
       <div class="flex items-center space-x-2">
         <el-tooltip content={row.redirect_uri} placement="top">
           <span
-            class="text-sm text-blue-600 cursor-pointer hover:text-blue-800 transition-colors truncate max-w-[160px]"
+            class="max-w-[160px] cursor-pointer truncate text-sm text-blue-600 transition-colors hover:text-blue-800"
             onClick={() => copyToClipboard(row.redirect_uri, '回调地址')}
           >
             {row.redirect_uri}
@@ -221,7 +225,8 @@ const getTableColumns = computed(() => [
               placement="top"
             >
               <el-tag size="small" type="info" effect="plain">
-                +{remainingCount}
+                +
+                {remainingCount}
               </el-tag>
             </el-tooltip>
           )}
@@ -238,14 +243,16 @@ const getTableColumns = computed(() => [
       const stats = row.stats || { total_bindings: 0, active_bindings: 0 }
       return (
         <div class="text-center">
-          <div class="text-lg font-bold text-blue-600">
+          <div class="text-lg text-blue-600 font-bold">
             {stats.total_bindings}
           </div>
           <div class="text-xs text-gray-500">
-            活跃: {stats.active_bindings}
+            活跃:
+            {' '}
+            {stats.active_bindings}
           </div>
           {(stats as any).last_used_at && (
-            <div class="text-xs text-gray-400 mt-1">
+            <div class="mt-1 text-xs text-gray-400">
               {new Date((stats as any).last_used_at).toLocaleDateString()}
             </div>
           )}
@@ -298,9 +305,9 @@ const getTableColumns = computed(() => [
     width: 220,
     fixed: 'right',
     cellRender: ({ row }: { row: OAuthProvider }) => {
-      const isOperating = actionStates.testing.has(row.id) ||
-                         actionStates.toggling.has(row.id) ||
-                         actionStates.deleting.has(row.id)
+      const isOperating = actionStates.testing.has(row.id)
+        || actionStates.toggling.has(row.id)
+        || actionStates.deleting.has(row.id)
 
       return (
         <div class="flex space-x-1">
@@ -353,10 +360,10 @@ const getSearchItems = computed(() => [
         { label: '全部', value: '' },
         ...providerOptions.value.map((option: any) => ({
           label: option.label,
-          value: option.value
-        }))
-      ]
-    }
+          value: option.value,
+        })),
+      ],
+    },
   },
   {
     label: '启用状态',
@@ -368,9 +375,9 @@ const getSearchItems = computed(() => [
       options: [
         { label: '全部', value: '' },
         { label: '启用', value: 1 },
-        { label: '禁用', value: 0 }
-      ]
-    }
+        { label: '禁用', value: 0 },
+      ],
+    },
   },
   {
     label: '关键词',
@@ -379,7 +386,7 @@ const getSearchItems = computed(() => [
     renderProps: {
       placeholder: '搜索显示名称、客户端ID...',
       clearable: true,
-    }
+    },
   },
 ])
 
@@ -399,7 +406,8 @@ const maDialog: UseDialogExpose = useDialog({
             msg.success(successMessage)
             maDialog.close()
             proTableRef.value.refresh()
-          } else {
+          }
+          else {
             msg.error(res.message)
           }
         }).catch((err: any) => {
@@ -463,13 +471,13 @@ const schema = computed<MaProTableSchema>(() => ({
 // 删除操作
 function handleDelete(id?: number) {
   const ids = id ? [id] : selections.value.map((item: OAuthProvider) => item.id)
-  const message = id ?
-    '确定要删除这个OAuth提供者吗？删除后相关的用户绑定也会被清除。' :
-    `确定要删除选中的 ${ids.length} 个OAuth提供者吗？删除后相关的用户绑定也会被清除。`
+  const message = id
+    ? '确定要删除这个OAuth提供者吗？删除后相关的用户绑定也会被清除。'
+    : `确定要删除选中的 ${ids.length} 个OAuth提供者吗？删除后相关的用户绑定也会被清除。`
 
   // 检查是否有正在操作的项目
   const hasActiveOperations = ids.some((itemId: number) =>
-    actionStates.testing.has(itemId) || actionStates.toggling.has(itemId) || actionStates.deleting.has(itemId)
+    actionStates.testing.has(itemId) || actionStates.toggling.has(itemId) || actionStates.deleting.has(itemId),
   )
 
   if (hasActiveOperations) {
@@ -489,7 +497,8 @@ function handleDelete(id?: number) {
     try {
       if (id) {
         await deleteProvider(id)
-      } else {
+      }
+      else {
         await deleteProviders(ids)
       }
       msg.success('删除成功')
@@ -499,9 +508,11 @@ function handleDelete(id?: number) {
       if (!id) {
         selections.value = []
       }
-    } catch (error: any) {
+    }
+    catch (error: any) {
       msg.error(handleError(error, '删除操作'))
-    } finally {
+    }
+    finally {
       ids.forEach((itemId: number) => actionStates.deleting.delete(itemId))
     }
   }).catch(() => {
@@ -517,7 +528,7 @@ function handleEdit(record: OAuthProvider) {
 
 // 测试连接
 async function handleTestProvider(id: number) {
-  if (actionStates.testing.has(id)) return
+  if (actionStates.testing.has(id)) { return }
 
   actionStates.testing.add(id)
 
@@ -543,27 +554,31 @@ async function handleTestProvider(id: number) {
             confirmButtonText: '打开认证页面',
             cancelButtonText: '不用了',
             type: 'success',
-          }
+          },
         ).then(() => {
           window.open(authUrl, '_blank')
         }).catch(() => {
           // 用户选择不打开
         })
       }
-    } else {
+    }
+    else {
       const errorDetail = response.data.error || '未知错误'
       msg.error(`连接测试失败: ${errorDetail}`)
 
       // 提供解决建议
       if (errorDetail.includes('client_id')) {
         msg.info('请检查客户端ID是否正确配置')
-      } else if (errorDetail.includes('redirect_uri')) {
+      }
+      else if (errorDetail.includes('redirect_uri')) {
         msg.info('请检查回调地址是否正确配置')
       }
     }
-  } catch (error: any) {
+  }
+  catch (error: any) {
     msg.error(handleError(error, '连接测试'))
-  } finally {
+  }
+  finally {
     loading.close()
     actionStates.testing.delete(id)
   }
@@ -592,16 +607,17 @@ function handleBatchToggle(enabled: boolean) {
       confirmButtonText: `确定${action}`,
       cancelButtonText: '取消',
       type: 'warning',
-    }
+    },
   ).then(async () => {
     const promises = selections.value.map((item: OAuthProvider) =>
-      debouncedToggle(item.id, enabled)
+      debouncedToggle(item.id, enabled),
     )
 
     try {
       await Promise.all(promises)
       msg.success(`批量${action}操作完成`)
-    } catch (error) {
+    }
+    catch (error) {
       msg.error(`批量${action}操作部分失败，请检查各项状态`)
     }
   })

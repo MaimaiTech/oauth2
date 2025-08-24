@@ -6,12 +6,10 @@
  */
 
 import type {
-  OAuthProvider,
-  UserOAuthAccount,
+  OAuthCallbackResponse,
   OAuthProviderName,
   ProviderOption,
-  OAuthStatus,
-  OAuthCallbackResponse,
+  UserOAuthAccount,
 } from './types'
 
 import type { ResponseStruct } from '#/global'
@@ -100,10 +98,10 @@ export function authorizeProvider(provider: OAuthProviderName, redirectUrl?: str
 export function handleOAuthCallback(
   provider: OAuthProviderName,
   code: string,
-  state: string
+  state: string,
 ): Promise<OAuthCallbackResponse> {
   return useHttp().get(`/oauth/callback/${provider}`, {
-    params: { code, state }
+    params: { code, state },
   })
 }
 
@@ -266,7 +264,8 @@ export function formatBinding(binding: UserOAuthBinding): {
   if (binding.status === 'disabled') {
     statusText = '已禁用'
     statusColor = 'warning'
-  } else if (binding.token_expired) {
+  }
+  else if (binding.token_expired) {
     statusText = '令牌过期'
     statusColor = 'danger'
   }
@@ -297,11 +296,14 @@ function formatDate(dateString: string): string {
 
   if (diffDays === 0) {
     return '今天'
-  } else if (diffDays === 1) {
+  }
+  else if (diffDays === 1) {
     return '昨天'
-  } else if (diffDays < 7) {
+  }
+  else if (diffDays < 7) {
     return `${diffDays}天前`
-  } else {
+  }
+  else {
     return date.toLocaleDateString('zh-CN')
   }
 }
@@ -310,8 +312,8 @@ function formatDate(dateString: string): string {
  * Generate OAuth state parameter for CSRF protection
  */
 export function generateOAuthState(): string {
-  return Math.random().toString(36).substring(2, 15) +
-         Math.random().toString(36).substring(2, 15)
+  return Math.random().toString(36).substring(2, 15)
+    + Math.random().toString(36).substring(2, 15)
 }
 
 /**

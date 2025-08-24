@@ -1,3 +1,195 @@
+<script setup lang="ts">
+import { computed, ref } from 'vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import {
+  Loading,
+  Refresh,
+  User,
+} from '@element-plus/icons-vue'
+
+import type { UserOAuthBinding,
+} from '../../api/userOAuthApi'
+import {
+  supportsRefreshToken as checkSupportsRefreshToken,
+  getProviderConfig,
+  refreshToken,
+  unbindAccount,
+} from '../../api/userOAuthApi'
+
+import StatusIndicator from './StatusIndicator.vue'
+
+// Define props
+interface Props {
+  /** OAuth binding data */
+  binding: UserOAuthBinding
+  /** Loading state */
+  loading?: boolean
+  /** Error message */
+  errorMessage?: string
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  loading: false,
+})
+
+const emit = defineEmits<Emits>()
+
+// Define emits
+interface Emits {
+  (e: 'refresh', binding: UserOAuthBinding): void
+  (e: 'unbind', binding: UserOAuthBinding): void
+  (e: 'updated', binding: UserOAuthBinding): void
+}
+
+// Local state
+const refreshing = ref(false)
+const unbinding = ref(false)
+
+// Provider configuration
+const providerConfig = computed(() => getProviderConfig(props.binding.provider))
+
+// Provider icon mapping
+const iconComponents = {
+  dingtalk: 'IconDingTalk',
+  github: 'IconGitHub',
+  gitee: 'IconGitee',
+  feishu: 'IconFeishu',
+  wechat: 'IconWechat',
+  qq: 'IconQQ',
+}
+
+const providerIcon = computed(() => {
+  return iconComponents[props.binding.provider] || 'IconOAuth'
+})
+
+// Token expiration checks
+const isExpired = computed(() => {
+  if (!props.binding.expires_at) { return false }
+  return new Date(props.binding.expires_at) < new Date()
+})
+
+const isExpiringSoon = computed(() => {
+  if (!props.binding.expires_at || isExpired.value) { return false }
+  const expiryDate = new Date(props.binding.expires_at)
+  const now = new Date()
+  const diffDays = Math.ceil((expiryDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+  return diffDays <= 7 // Expiring within 7 days
+})
+
+// Binding status computation
+const bindingStatus = computed(() => {
+  if (props.binding.status === 'disabled') { return 'disabled' }
+  if (isExpired.value || props.binding.token_expired) { return 'expired' }
+  if (props.errorMessage) { return 'error' }
+  if (props.loading) { return 'pending' }
+  if (props.binding.status === 'normal') { return 'connected' }
+  return 'disconnected'
+})
+
+// Action availability
+const supportsRefreshToken = computed(() => {
+  return checkSupportsRefreshToken(props.binding.provider)
+})
+
+const canRefresh = computed(() => {
+  return props.binding.status === 'normal'
+    && !props.loading
+    && (isExpired.value || isExpiringSoon.value)
+})
+
+// Card styling
+const cardClass = computed(() => {
+  return [
+    `binding-card--${props.binding.provider}`,
+    {
+      'binding-card--expired': isExpired.value,
+      'binding-card--expiring': isExpiringSoon.value,
+      'binding-card--disabled': props.binding.status === 'disabled',
+      'binding-card--loading': props.loading,
+    },
+  ]
+})
+
+// Date formatting
+function formatDate(dateString: string): string {
+  const date = new Date(dateString)
+  const now = new Date()
+  const diffMs = now.getTime() - date.getTime()
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
+
+  if (diffDays === 0) {
+    return `今天 ${date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })}`
+  }
+  else if (diffDays === 1) {
+    return `昨天 ${date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })}`
+  }
+  else if (diffDays < 7) {
+    return `${diffDays}天前`
+  }
+  else {
+    return `${date.toLocaleDateString('zh-CN')} ${date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })}`
+  }
+}
+
+// Handle refresh token
+async function handleRefreshToken() {
+  try {
+    refreshing.value = true
+    const result = await refreshToken(props.binding.provider)
+
+    if (result.success) {
+      ElMessage.success('令牌刷新成功')
+      emit('refresh', props.binding)
+      emit('updated', props.binding)
+    }
+    else {
+      ElMessage.error(result.message || '令牌刷新失败')
+    }
+  }
+  catch (error: any) {
+    ElMessage.error(error.message || '令牌刷新失败')
+  }
+  finally {
+    refreshing.value = false
+  }
+}
+
+// Handle unbind account
+async function handleUnbind() {
+  try {
+    await ElMessageBox.confirm(
+      `确定要解绑 ${providerConfig.value.label} 账号吗？解绑后将无法使用该账号快速登录。`,
+      '解绑确认',
+      {
+        confirmButtonText: '确定解绑',
+        cancelButtonText: '取消',
+        type: 'warning',
+        confirmButtonClass: 'el-button--danger',
+      },
+    )
+
+    unbinding.value = true
+    const result = await unbindAccount(props.binding.provider)
+
+    if (result.success) {
+      ElMessage.success('账号解绑成功')
+      emit('unbind', props.binding)
+    }
+    else {
+      ElMessage.error(result.message || '账号解绑失败')
+    }
+  }
+  catch (error: any) {
+    if (error !== 'cancel') {
+      ElMessage.error(error.message || '账号解绑失败')
+    }
+  }
+  finally {
+    unbinding.value = false
+  }
+}
+</script>
+
 <template>
   <el-card class="oauth-binding-card" :class="cardClass" shadow="hover">
     <!-- Card Header -->
@@ -9,8 +201,12 @@
           </el-icon>
         </div>
         <div class="provider-details">
-          <h4 class="provider-name">{{ providerConfig.label }}</h4>
-          <p class="provider-description">{{ binding.provider_username || binding.provider_nickname }}</p>
+          <h4 class="provider-name">
+            {{ providerConfig.label }}
+          </h4>
+          <p class="provider-description">
+            {{ binding.provider_username || binding.provider_nickname }}
+          </p>
         </div>
       </div>
       <StatusIndicator
@@ -45,7 +241,9 @@
           <div v-if="binding.provider_email" class="user-email">
             {{ binding.provider_email }}
           </div>
-          <div class="user-id">ID: {{ binding.provider_user_id }}</div>
+          <div class="user-id">
+            ID: {{ binding.provider_user_id }}
+          </div>
         </div>
       </div>
 
@@ -102,7 +300,7 @@
         @click="handleUnbind"
       >
         <template #icon>
-          <el-icon></el-icon>
+          <el-icon />
         </template>
         解绑账号
       </el-button>
@@ -126,190 +324,6 @@
   </el-card>
 </template>
 
-<script setup lang="ts">
-import { computed, ref } from 'vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
-import {
-  User,
-  Refresh,
-  Loading
-} from '@element-plus/icons-vue'
-
-import type { OAuthProviderName } from '../../api/types'
-import {
-  getProviderConfig,
-  supportsRefreshToken as checkSupportsRefreshToken,
-  unbindAccount,
-  refreshToken,
-  formatBinding,
-} from '../../api/userOAuthApi'
-import { UserOAuthBinding } from '../../api/userOAuthApi'
-
-import StatusIndicator from './StatusIndicator.vue'
-
-// Define props
-interface Props {
-  /** OAuth binding data */
-  binding: UserOAuthBinding
-  /** Loading state */
-  loading?: boolean
-  /** Error message */
-  errorMessage?: string
-}
-
-const props = withDefaults(defineProps<Props>(), {
-  loading: false
-})
-
-// Define emits
-interface Emits {
-  (e: 'refresh', binding: UserOAuthBinding): void
-  (e: 'unbind', binding: UserOAuthBinding): void
-  (e: 'updated', binding: UserOAuthBinding): void
-}
-
-const emit = defineEmits<Emits>()
-
-// Local state
-const refreshing = ref(false)
-const unbinding = ref(false)
-
-// Provider configuration
-const providerConfig = computed(() => getProviderConfig(props.binding.provider))
-
-// Provider icon mapping
-const iconComponents = {
-  dingtalk: 'IconDingTalk',
-  github: 'IconGitHub',
-  gitee: 'IconGitee',
-  feishu: 'IconFeishu',
-  wechat: 'IconWechat',
-  qq: 'IconQQ'
-}
-
-const providerIcon = computed(() => {
-  return iconComponents[props.binding.provider] || 'IconOAuth'
-})
-
-// Token expiration checks
-const isExpired = computed(() => {
-  if (!props.binding.expires_at) return false
-  return new Date(props.binding.expires_at) < new Date()
-})
-
-const isExpiringSoon = computed(() => {
-  if (!props.binding.expires_at || isExpired.value) return false
-  const expiryDate = new Date(props.binding.expires_at)
-  const now = new Date()
-  const diffDays = Math.ceil((expiryDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
-  return diffDays <= 7 // Expiring within 7 days
-})
-
-// Binding status computation
-const bindingStatus = computed(() => {
-  if (props.binding.status === 'disabled') return 'disabled'
-  if (isExpired.value || props.binding.token_expired) return 'expired'
-  if (props.errorMessage) return 'error'
-  if (props.loading) return 'pending'
-  if (props.binding.status === 'normal') return 'connected'
-  return 'disconnected'
-})
-
-// Action availability
-const supportsRefreshToken = computed(() => {
-  return checkSupportsRefreshToken(props.binding.provider)
-})
-
-const canRefresh = computed(() => {
-  return props.binding.status === 'normal' &&
-         !props.loading &&
-         (isExpired.value || isExpiringSoon.value)
-})
-
-// Card styling
-const cardClass = computed(() => {
-  return [
-    `binding-card--${props.binding.provider}`,
-    {
-      'binding-card--expired': isExpired.value,
-      'binding-card--expiring': isExpiringSoon.value,
-      'binding-card--disabled': props.binding.status === 'disabled',
-      'binding-card--loading': props.loading
-    }
-  ]
-})
-
-// Date formatting
-const formatDate = (dateString: string): string => {
-  const date = new Date(dateString)
-  const now = new Date()
-  const diffMs = now.getTime() - date.getTime()
-  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
-
-  if (diffDays === 0) {
-    return '今天 ' + date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
-  } else if (diffDays === 1) {
-    return '昨天 ' + date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
-  } else if (diffDays < 7) {
-    return `${diffDays}天前`
-  } else {
-    return date.toLocaleDateString('zh-CN') + ' ' + date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
-  }
-}
-
-// Handle refresh token
-const handleRefreshToken = async () => {
-  try {
-    refreshing.value = true
-    const result = await refreshToken(props.binding.provider)
-
-    if (result.success) {
-      ElMessage.success('令牌刷新成功')
-      emit('refresh', props.binding)
-      emit('updated', props.binding)
-    } else {
-      ElMessage.error(result.message || '令牌刷新失败')
-    }
-  } catch (error: any) {
-    ElMessage.error(error.message || '令牌刷新失败')
-  } finally {
-    refreshing.value = false
-  }
-}
-
-// Handle unbind account
-const handleUnbind = async () => {
-  try {
-    await ElMessageBox.confirm(
-      `确定要解绑 ${providerConfig.value.label} 账号吗？解绑后将无法使用该账号快速登录。`,
-      '解绑确认',
-      {
-        confirmButtonText: '确定解绑',
-        cancelButtonText: '取消',
-        type: 'warning',
-        confirmButtonClass: 'el-button--danger'
-      }
-    )
-
-    unbinding.value = true
-    const result = await unbindAccount(props.binding.provider)
-
-    if (result.success) {
-      ElMessage.success('账号解绑成功')
-      emit('unbind', props.binding)
-    } else {
-      ElMessage.error(result.message || '账号解绑失败')
-    }
-  } catch (error: any) {
-    if (error !== 'cancel') {
-      ElMessage.error(error.message || '账号解绑失败')
-    }
-  } finally {
-    unbinding.value = false
-  }
-}
-</script>
-
 <style lang="scss" scoped>
 // Clean and Bright Variables (same as parent component)
 :root {
@@ -324,13 +338,13 @@ const handleUnbind = async () => {
   --text-gray: #6b7280;
   --border-light: #e5e7eb;
   --border-lighter: #f3f4f6;
-  
+
   --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
   --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.07);
-  
+
   --radius-md: 8px;
   --radius-lg: 12px;
-  
+
   --transition-fast: 0.15s ease;
   --transition-normal: 0.25s ease;
 }
@@ -540,7 +554,7 @@ const handleUnbind = async () => {
 @media (max-width: 768px) {
   .binding-header {
     padding: 16px 16px 0;
-    
+
     .provider-avatar {
       width: 36px;
       height: 36px;
@@ -559,7 +573,7 @@ const handleUnbind = async () => {
 
   .binding-content {
     padding: 0 16px;
-    
+
     .user-info {
       padding: 12px;
     }
@@ -567,7 +581,7 @@ const handleUnbind = async () => {
 
   .binding-actions {
     padding: 0 16px 16px;
-    
+
     :deep(.el-button) {
       font-size: 13px;
       min-width: 80px;

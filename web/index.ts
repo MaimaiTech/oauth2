@@ -10,11 +10,11 @@
 import type { App } from 'vue'
 import type { Plugin } from '#/global'
 
-// Export types and interfaces
-export * from './api/types'
-
 // Export API functions with namespace to avoid conflicts
 export * as OAuthAdminAPI from './api/oauthApi'
+
+// Export types and interfaces
+export * from './api/types'
 export * as OAuthUserAPI from './api/userOAuthApi'
 
 // Export component modules

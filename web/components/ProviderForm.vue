@@ -8,19 +8,18 @@
 <script setup lang="tsx">
 import type { FormInstance } from 'element-plus'
 import type {
-  OAuthProvider,
   CreateProviderRequest,
-  UpdateProviderRequest,
+  OAuthProvider,
   OAuthProviderName,
-  ProviderOption
+  ProviderOption,
+  UpdateProviderRequest,
 } from '../api/types'
 
 import {
   createProvider,
-  updateProvider,
   getProviderOptions,
-  getProviderDefaultScopes,
-  validateProviderConfig
+  updateProvider,
+  validateProviderConfig,
 } from '../api/oauthApi'
 import { useMessage } from '@/hooks/useMessage.ts'
 
@@ -83,11 +82,12 @@ const formRules = {
         try {
           new URL(value)
           callback()
-        } catch {
+        }
+        catch {
           callback(new Error('请输入有效的URL地址'))
         }
       },
-      trigger: 'blur'
+      trigger: 'blur',
     },
   ],
   sort: [
@@ -180,7 +180,8 @@ function initFormData() {
       sort: props.data.sort,
       remark: props.data.remark || '',
     }
-  } else {
+  }
+  else {
     // 新增模式，重置为默认值
     formData.value = {
       name: 'github',
@@ -211,9 +212,11 @@ async function add() {
     const response = await createProvider(formData.value)
     emit('success')
     return response
-  } catch (error: any) {
+  }
+  catch (error: any) {
     throw error
-  } finally {
+  }
+  finally {
     loading.value = false
   }
 }
@@ -235,9 +238,11 @@ async function edit() {
     const response = await updateProvider(props.data.id, updateData)
     emit('success')
     return response
-  } catch (error: any) {
+  }
+  catch (error: any) {
     throw error
-  } finally {
+  }
+  finally {
     loading.value = false
   }
 }
@@ -264,16 +269,16 @@ watch(() => [props.formType, props.data], () => {
   <div class="oauth-provider-form">
     <el-form
       ref="maForm"
+      v-loading="loading"
       :model="formData"
       :rules="formRules"
       label-width="120px"
-      v-loading="loading"
     >
       <!-- 基本信息 -->
       <el-card class="mb-4" shadow="never">
         <template #header>
           <div class="flex items-center space-x-2">
-            <i class="i-solar:settings-outline"></i>
+            <i class="i-solar:settings-outline" />
             <span class="font-medium">基本配置</span>
           </div>
         </template>
@@ -295,7 +300,7 @@ watch(() => [props.formType, props.data], () => {
                 >
                   <div class="flex items-center space-x-2">
                     <div
-                      class="w-4 h-4 rounded flex items-center justify-center text-white text-xs"
+                      class="h-4 w-4 flex items-center justify-center rounded text-xs text-white"
                       :style="{ backgroundColor: option.brand_color }"
                     >
                       {{ option.label.charAt(0) }}
@@ -333,10 +338,10 @@ watch(() => [props.formType, props.data], () => {
                 v-model="formData.client_secret"
                 type="password"
                 placeholder="OAuth应用客户端密钥"
-                show-password
-                clearable
+
+                clearable show-password
               />
-              <div v-if="formType === 'edit'" class="text-xs text-gray-500 mt-1">
+              <div v-if="formType === 'edit'" class="mt-1 text-xs text-gray-500">
                 留空表示不更改现有密钥
               </div>
             </el-form-item>
@@ -349,7 +354,7 @@ watch(() => [props.formType, props.data], () => {
             placeholder="OAuth授权回调地址"
             clearable
           />
-          <div class="text-xs text-gray-500 mt-1">
+          <div class="mt-1 text-xs text-gray-500">
             确保此地址与OAuth应用配置中的回调地址一致
           </div>
         </el-form-item>
@@ -383,7 +388,7 @@ watch(() => [props.formType, props.data], () => {
         <template #header>
           <div class="flex items-center justify-between">
             <div class="flex items-center space-x-2">
-              <i class="i-solar:shield-check-outline"></i>
+              <i class="i-solar:shield-check-outline" />
               <span class="font-medium">授权范围</span>
             </div>
             <el-button
@@ -404,8 +409,8 @@ watch(() => [props.formType, props.data], () => {
               v-for="(scope, index) in formData.scopes"
               :key="scope"
               closable
-              @close="removeScope(index)"
               type="primary"
+              @close="removeScope(index)"
             >
               {{ scope }}
             </el-tag>
@@ -416,16 +421,20 @@ watch(() => [props.formType, props.data], () => {
             <el-input
               v-model="newScope"
               placeholder="输入新的授权范围"
-              @keyup.enter="addScope"
               class="flex-1"
+              @keyup.enter="addScope"
             />
-            <el-button type="primary" @click="addScope">添加</el-button>
+            <el-button type="primary" @click="addScope">
+              添加
+            </el-button>
           </div>
 
           <!-- 默认作用域提示 -->
           <div v-if="currentProviderOption" class="text-sm text-gray-600">
-            <div class="font-medium">{{ currentProviderOption.label }} 默认作用域：</div>
-            <div class="flex flex-wrap gap-1 mt-1">
+            <div class="font-medium">
+              {{ currentProviderOption.label }} 默认作用域：
+            </div>
+            <div class="mt-1 flex flex-wrap gap-1">
               <el-tag
                 v-for="scope in currentProviderOption.default_scopes"
                 :key="scope"
@@ -443,7 +452,7 @@ watch(() => [props.formType, props.data], () => {
       <el-card class="mb-4" shadow="never">
         <template #header>
           <div class="flex items-center space-x-2">
-            <i class="i-solar:settings-linear"></i>
+            <i class="i-solar:settings-linear" />
             <span class="font-medium">额外配置</span>
           </div>
         </template>
@@ -455,7 +464,7 @@ watch(() => [props.formType, props.data], () => {
               <div
                 v-for="[key, value] in Object.entries(formData.extra_config)"
                 :key="key"
-                class="flex items-center justify-between p-2 bg-gray-50 rounded"
+                class="flex items-center justify-between rounded bg-gray-50 p-2"
               >
                 <div class="flex-1">
                   <span class="font-medium">{{ key }}:</span>
@@ -485,7 +494,9 @@ watch(() => [props.formType, props.data], () => {
               placeholder="配置值"
               class="flex-1"
             />
-            <el-button type="primary" @click="addExtraConfig">添加</el-button>
+            <el-button type="primary" @click="addExtraConfig">
+              添加
+            </el-button>
           </div>
         </div>
       </el-card>
@@ -494,7 +505,7 @@ watch(() => [props.formType, props.data], () => {
       <el-card shadow="never">
         <template #header>
           <div class="flex items-center space-x-2">
-            <i class="i-solar:document-text-outline"></i>
+            <i class="i-solar:document-text-outline" />
             <span class="font-medium">备注信息</span>
           </div>
         </template>
